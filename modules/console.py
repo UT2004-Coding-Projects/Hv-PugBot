@@ -3,7 +3,12 @@
 
 from threading import Thread
 from multiprocessing import Queue
-import sys, os, datetime, readline, time
+import sys, os, datetime, time
+
+try:  # windows does not have readline module
+	import readline
+except ModuleNotFoundError:
+	import pyreadline as readline
 
 from modules import bot, client, config, stats3
 

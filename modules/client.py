@@ -118,7 +118,11 @@ def get_member_by_id(channel, highlight):
 		return None
 
 ### discord events ###
-c = discord.Client()
+intents = discord.Intents.default()
+intents.presences = True
+intents.members = True
+intents.typing = False
+c = discord.Client(intents=intents)
 
 @c.event
 async def on_ready():
@@ -128,7 +132,7 @@ async def on_ready():
 		ready = True
 	else:
 		console.display("DEBUG| Unexpected on_ready event!")
-	await c.change_presence(activity=discord.Game(name='type !pugs'))
+	await c.change_presence(activity=discord.Game(name='pm !help'))
 
 @c.event
 async def on_message(message):
@@ -170,6 +174,10 @@ async def on_member_update(before, after):
 	#console.display("DEBUG| {0} changed status from {1}  to -{2}-".format(after.name, before.status, after.status))
 	if str(after.status) in ['idle', 'offline']:
 		bot.update_member(after)
+
+@c.event
+async def on_member_remove(member):
+	bot.member_left(member)
 
 @c.event
 async def on_reaction_add(reaction, user):

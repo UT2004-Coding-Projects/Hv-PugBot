@@ -8,7 +8,7 @@ from decimal import Decimal
 from modules import console
 
 #INIT
-version = 11
+version = 12
 def init():
 	global conn, c, last_match
 	dbexists = isfile("database.sqlite3")
@@ -98,6 +98,7 @@ def delete_channel(channel_id):
 	c.execute("DELETE FROM pickup_configs WHERE channel_id = ?", (channel_id, ))
 	c.execute("DELETE FROM player_pickups WHERE channel_id = ?", (channel_id, ))
 	c.execute("DELETE FROM pickups WHERE channel_id = ?", (channel_id, ))
+	c.execute("DELETE FROM pickup_groups WHERE channel_id = ?", (channel_id, ))
 	conn.commit()
 
 def reset_stats(channel_id):
@@ -111,7 +112,7 @@ def undo_ranks(channel_id, match_id):
 	if len(l):
 		c.execute("UPDATE player_pickups SET is_ranked = 0 WHERE channel_id = ? AND pickup_id = ?", (channel_id, match_id))
 		for user_id, user_name, rank_change, is_winner in l:
-			c.execute("UPDATE channel_players SET rank=rank-(?), wins=wins-?, loses=loses-? WHERE channel_id = ? AND user_id = ?", (rank_change, int(is_winner), 1-int(is_winner), channel_id, user_id))
+			c.execute("UPDATE channel_players SET rank=rank-(?), wins=wins-?, loses=loses-? WHERE channel_id = ? AND user_id = ?", (rank_change, is_winner, 1-is_winner, channel_id, user_id))
 		conn.commit()
 		return("\n".join(["`{0}` - **{1:+}** points".format(i[1], 0-i[2]) for i in l]))
 	else:
@@ -122,7 +123,7 @@ def seed_player(channel_id, user_id, rating):
 	if c.fetchone():
 		c.execute("UPDATE channel_players SET rank = ?, is_seeded = ? WHERE channel_id = ? AND user_id = ?", (rating, True, channel_id, user_id))
 	else:
-		c.execute("INSERT INTO channel_players (channel_id, user_id, rank, is_seeded) VALUES (?, ?, ?, ?)" (channel_id, user_id, rating, True))
+		c.execute("INSERT INTO channel_players (channel_id, user_id, rank, is_seeded) VALUES (?, ?, ?, ?)", (channel_id, user_id, rating, True))
 
 def reset_ranks(channel_id):
 	c.execute("UPDATE channel_players SET rank = NULL, wins = NULL, loses = NULL, streak = NULL, is_seeded = NULL WHERE channel_id = ?", (channel_id,))
@@ -131,6 +132,7 @@ def reset_ranks(channel_id):
 def register_pickup(match):
 	new_ranks = dict()
 	at = int(time())
+	match.ranks = get_ranks(match.pickup.channel, [i.id for i in match.players])  # Update players ratings incase of changes
 
 	playersstr = " " + " ".join([i.nick or i.name for i in match.players]) + " "
 	if match.alpha_team and match.beta_team:
@@ -150,6 +152,8 @@ def register_pickup(match):
 		expected_scores = [1/(1+10**((beta_rank-alpha_rank)/400)), 1/(1+10**((alpha_rank-beta_rank)/400))]
 		if match.winner == 'alpha':
 			scores = [1, 0]
+		elif match.winner == 'draw':
+			scores = [0.5, 0.5]
 		else:
 			scores = [0, 1]
 
@@ -182,14 +186,19 @@ def register_pickup(match):
 			if match.ranked_streaks:
 				if streak.__gt__(0) != scores[team_num].__gt__(0):
 					streak = 0
-				streak = streak + (1 if scores[team_num] else -1)
+				if scores[team_num] == 1:
+					streak += 1
+				elif scores[team_num] == 0.5:
+					streak = 0
+				else:
+					streak -= 1
 				if abs(streak) > 2:
 					rank_change = int( rank_change * ( min([abs(streak), 6])/2.0 ) )
 			else:
 				streak = 0
 
 			rank_after = match.ranks[player.id] + rank_change
-			is_winner = bool(scores[team_num])
+			is_winner = scores[team_num]
 
 			c.execute("UPDATE channel_players SET nick = ?, rank = ?, wins=?, loses=?, streak=? WHERE channel_id = ? AND user_id = ?", (user_name, rank_after, wins+scores[team_num], loses+abs(scores[team_num]-1), streak, match.pickup.channel.id, player.id))
 			new_ranks[player.id] = [user_name, rank_after]
@@ -539,6 +548,22 @@ def check_db():
 			ADD COLUMN `initial_rating` INTEGER
 			""")
 
+		if db_version < 12:
+			c.execute("""ALTER TABLE `channels`
+			ADD COLUMN `autostart` INTEGER DEFAULT 1
+			""")
+			c.execute("""ALTER TABLE `pickup_configs`
+			ADD COLUMN `autostart` INTEGER
+			""")
+
+		if db_version < 13:
+			c.execute("""ALTER TABLE `channels`
+			ADD COLUMN `help_answer` TEXT
+			""")
+			c.execute("""ALTER TABLE `pickup_configs`
+			ADD COLUMN `help_answer` TEXT
+			""")
+
 		c.execute("INSERT OR REPLACE INTO utility (variable, value) VALUES ('version', ?)", (str(version), ))
 		conn.commit()
 
@@ -609,6 +634,8 @@ def create_tables():
 		`initial_rating` INTEGER,
 		`match_livetime` INTEGER,
 		`global_expire` INTEGER,
+		`autostart` INTEGER DEFAULT 1,
+		`help_answer` TEXT,
 		`start_pm_msg` TEXT DEFAULT '**%pickup_name%** pickup has been started @ %channel%.',
 		PRIMARY KEY(`channel_id`) )""")
 
@@ -637,6 +664,8 @@ def create_tables():
 		`require_ready` INTEGER,
 		`ranked` INTEGER,
 		`allow_offline` INTEGER DEFAULT 0,
+		`autostart` INTEGER,
+		`help_answer` TEXT,
 		PRIMARY KEY(`channel_id`, `pickup_name`) )""")
 
 	c.execute("""CREATE TABLE `pickups` 
