@@ -964,12 +964,14 @@ class Channel():
 
         if member in match.alpha_team[0:1]:
             team = match.alpha_team
+            enemy_team = match.beta_team
             if match.pick_order:
                 if match.pick_order[match.pick_step] == "b":
                     client.reply(self.channel, member, "Not your turn to pick.")
                     return
         elif member in match.beta_team[0:1]:
             team = match.beta_team
+            enemy_team = match.alpha_team
             if match.pick_order:
                 if match.pick_order[match.pick_step] == "a":
                     client.reply(self.channel, member, "Not your turn to pick.")
@@ -1018,6 +1020,12 @@ class Channel():
             client.reply(self.channel, member, "Specified player are not in unpicked players list.")
         else:
             client.reply(self.channel, member, "You must specify a player to pick!")
+
+        if len(match.unpicked) == 1:
+            last_player = match.unpicked[0]
+            enemy_team.append(last_player)
+            match.unpicked.remove(last_player)
+            match.next_state()
 
     async def put_player(self, member, args, access_level):
         if not access_level:
