@@ -13,6 +13,7 @@ ready_emoji = '☑'
 notready_emoji = '⛔'
 team_emojis = [":fox:", ":wolf:", ":dog:", ":bear:", ":panda_face:", ":tiger:", ":lion:", ":pig:", ":octopus:", ":boar:", ":spider:", ":scorpion:", ":crab:", ":eagle:", ":shark:", ":bat:", ":gorilla:", ":rhino:", ":dragon_face:", ":deer:"]
 
+
 def init():
     global channels, channels_list, active_pickups, active_matches, allowoffline, waiting_reactions
     channels = []
@@ -21,6 +22,22 @@ def init():
     active_matches = []
     allowoffline = [] #users with !allowoffline
     waiting_reactions = dict() #{message_id: function}
+
+
+class UnpickedPool():
+    def __init__(self, players):
+        self.position_to_players = {}
+        players_copy = players[:]
+        random.shuffle(players_copy)
+        for i, player in enumerate(players_copy, 1):
+            self.position_to_players[i] = player
+
+
+    def pick(player):
+        for position in self.position_to_players:
+            if self.position_to_players[position] == player:
+                return position, player
+
 
 class Match():
 
@@ -112,7 +129,8 @@ class Match():
             
             elif self.pick_teams == 'manual':
                 self.pick_step = 0
-                self.unpicked = list(players)
+                for i, player in players:
+                    self.unpicked.append(Player(player, i))
                 self.alpha_team = []
                 self.beta_team = []
                 if self.captains:
@@ -120,6 +138,7 @@ class Match():
                     self.beta_team.append(self.captains[1])
                     self.unpicked.remove(self.captains[0])
                     self.unpicked.remove(self.captains[1])
+                    self.unpicked_pool = UnpickedPool(self.unpicked)
                     
             elif self.pick_teams == 'auto':
                 #form balanced teams by rank
