@@ -212,9 +212,9 @@ class Match():
         else:
             beta_str = "❲{0}❳".format(self.team_names[1])
         if self.ranked:
-            unpicked_str = "\n".join([" - `{0}{1}`".format(utils.rating_to_icon(self.ranks[i.id]), (i.nick or i.name).replace("`","")) for i in sorted(self.unpicked, key=lambda p: self.ranks[p.id], reverse=True)])
+            unpicked_str = "[" + ", ".join(["`{0}{1}`".format(utils.rating_to_icon(self.ranks[i.id]), (i.nick or i.name).replace("`","")) for i in sorted(self.unpicked, key=lambda p: self.ranks[p.id], reverse=True)]) + "]"
         else:
-            unpicked_str = "\n".join([" - `{0}`".format((i.nick or i.name).replace("`","")) for i in self.unpicked])
+            unpicked_str = "[" + ", ".join(["`{0}`".format((i.nick or i.name).replace("`","")) for i in self.unpicked]) + "]"
         return "{0} {1}\n          :fire:**VERSUS**:fire:\n{3} {2}\n\n__Unpicked__:\n{4}".format(self.alpha_icon, alpha_str, beta_str, self.beta_icon, unpicked_str)
 
     def _startmsg_to_str(self):
