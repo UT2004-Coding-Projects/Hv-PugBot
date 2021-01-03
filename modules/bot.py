@@ -195,6 +195,7 @@ class Match():
             return "{0} ❲{1}❳ {4}\r\n          :fire: **VERSUS** :fire:\r\n{2} ❲{3}❳ {5}".format(self.alpha_icon, alpha_str, self.beta_icon, beta_str, *team_ratings)
             
     def _teams_picking_to_str(self):
+        match_id_str = "`Match {0}`".format(self.id)
         if len(self.alpha_team):
             if self.ranked:
                 alpha_str = "❲{1}❳ 〈__{0}__〉".format(sum([self.ranks[i.id] for i in self.alpha_team])//len(self.alpha_team), " + ".join(
@@ -215,7 +216,7 @@ class Match():
             unpicked_str = "\n".join([" - `{0}{1}`".format(utils.rating_to_icon(self.ranks[i.id]), (i.nick or i.name).replace("`","")) for i in sorted(self.unpicked, key=lambda p: self.ranks[p.id], reverse=True)])
         else:
             unpicked_str = "\n".join([" - `{0}`".format((i.nick or i.name).replace("`","")) for i in self.unpicked])
-        return "{0} {1}\n          :fire:**VERSUS**:fire:\n{3} {2}\n\n__Unpicked__:\n{4}".format(self.alpha_icon, alpha_str, beta_str, self.beta_icon, unpicked_str)
+        return "{0}\n{1} {2}\n          :fire:**VERSUS**:fire:\n{4} {3}\n\n__Unpicked__:\n{5}".format(match_id_str, self.alpha_icon, alpha_str, beta_str, self.beta_icon, unpicked_str)
 
     def _startmsg_to_str(self):
         ipstr = self.pickup.channel.get_value("startmsg", self.pickup)
@@ -283,6 +284,7 @@ class Match():
         client.notice(self.channel, startmsg)
 
     def print_startmsg_teams_picking_finish(self):
+        startmsg = "`Match {0}`\n".format(self.id)
         startmsg = "**TEAMS READY:**\r\n\r\n"
         startmsg += self._teams_to_str()
         startmsg += "\r\n\r\n" + self._startmsg_to_str()
