@@ -195,7 +195,7 @@ class Match():
             return "{0} ❲{1}❳ {4}\r\n          :fire: **VERSUS** :fire:\r\n{2} ❲{3}❳ {5}".format(self.alpha_icon, alpha_str, self.beta_icon, beta_str, *team_ratings)
             
     def _teams_picking_to_str(self):
-        match_id_str = "`Match {0}`".format(self.id)
+        match_id_str = "**Match {0}**".format(self.id)
         if len(self.alpha_team):
             if self.ranked:
                 alpha_str = "❲{1}❳ 〈__{0}__〉".format(sum([self.ranks[i.id] for i in self.alpha_team])//len(self.alpha_team), " + ".join(
@@ -284,8 +284,7 @@ class Match():
         client.notice(self.channel, startmsg)
 
     def print_startmsg_teams_picking_finish(self):
-        startmsg = "`Match {0}`\n".format(self.id)
-        startmsg = "**TEAMS READY:**\r\n\r\n"
+        startmsg = "**TEAMS READY - Match {0}**\r\n\r\n".format(self.id)
         startmsg += self._teams_to_str()
         startmsg += "\r\n\r\n" + self._startmsg_to_str()
         if self.map:
