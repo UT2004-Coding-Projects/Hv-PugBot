@@ -614,6 +614,9 @@ class Channel():
             elif lower[0]=="cancel_match":
                 self.cancel_match(member, lower[1:2], access_level)
 
+            elif lower[0]=="cancel":
+                self.cancel_match(member, lower[1:2], access_level)
+
             elif lower[0] in ["reportwin", "rw"]:
                 self.report_match(member, args=lower[1:3], access_level=access_level)
 
