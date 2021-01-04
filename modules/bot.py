@@ -286,10 +286,11 @@ class Match():
     def print_startmsg_teams_picking_finish(self):
         startmsg = "**TEAMS READY - Match {0}**\r\n\r\n".format(self.id)
         startmsg += self._teams_to_str()
-        startmsg += "\r\n\r\n" + self._startmsg_to_str()
+        startmsg += "\r\n\r\n"
         if self.map:
             startmsg += "\r\nSuggested map: **{0}**.".format(self.map)
         client.notice(self.channel, startmsg)
+        client.notice(self.channel, self._startmsg_to_str())
         
     def next_state(self):
         if self.state == 'none':
