@@ -262,7 +262,7 @@ class Match():
             unpicked_str = "[" + ", ".join(["`{0}{1}`".format(utils.rating_to_icon(self.ranks[i.id]), (i.nick or i.name).replace("`","")) for i in sorted(self.unpicked, key=lambda p: self.ranks[p.id], reverse=True)]) + "]"
         else:
             player_strs = []
-            for position, player in self.unpicked_pool.items():
+            for position, player in self.unpicked_pool.all.items():
                 player_strs.append(
                     "`{0}. {1}".format(position, (player.nick or player.name).replace("`",""))
                 )
