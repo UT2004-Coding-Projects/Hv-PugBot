@@ -4,6 +4,7 @@
 import time, datetime, re, traceback, random
 from discord import errors
 from itertools import combinations
+from collections import OrderedDict
 from modules import client, config, console, stats3, scheduler, utils
 
 max_expire_time = 6*60*60 #6 hours
@@ -26,17 +27,43 @@ def init():
 
 class UnpickedPool():
     def __init__(self, players):
-        self.position_to_players = {}
+        self.position_to_players = OrderedDict()
         players_copy = players[:]
         random.shuffle(players_copy)
         for i, player in enumerate(players_copy, 1):
             self.position_to_players[i] = player
 
+    def __len__(self):
+        return len(self.position_to_players)
 
-    def pick(player):
+    @property
+    def all(self):
+        """Return all position to player mappings."""
+        return self.position_to_players
+
+    def first(self):
+        """Return the first player from the unpicked pool from the order they were inserted."""
+        position, player = next(iter(self.position_to_players.items()))
+        del self.position_to_players[position]
+        return player
+
+    def pick_by_position(self, position):
+        """Pick a player by their position from the arbitrary position assignments they were given."""
+        player = self.position_to_players[position]
+        self.remove(position)
+        return player
+
+    def pick_by_player_id(self, player_id):
+        """Pick a player by the player/member id of their discord user."""
         for position in self.position_to_players:
-            if self.position_to_players[position] == player:
-                return position, player
+            if self.position_to_players[position].id == player_id:
+                player = self.position_to_players[position]
+                self.remove(position)
+                return player
+
+    def remove(self, position):
+        """Remove a player by their position in the unpicked pool."""
+        del self.position_to_players[position]
 
 
 class Match():
@@ -234,7 +261,12 @@ class Match():
         if self.ranked:
             unpicked_str = "[" + ", ".join(["`{0}{1}`".format(utils.rating_to_icon(self.ranks[i.id]), (i.nick or i.name).replace("`","")) for i in sorted(self.unpicked, key=lambda p: self.ranks[p.id], reverse=True)]) + "]"
         else:
-            unpicked_str = "[" + ", ".join(["`{0}`".format((i.nick or i.name).replace("`","")) for i in self.unpicked]) + "]"
+            player_strs = []
+            for position, player in self.unpicked_pool.items():
+                player_strs.append(
+                    "`{0}. {1}".format(position, (player.nick or player.name).replace("`",""))
+                )
+            unpicked_str = "[" + ", ".join(player_strs) + "]"
         return "{0}\n{1} {2}\n          :fire:**VERSUS**:fire:\n{4} {3}\n\n__Unpicked__:\n{5}".format(match_id_str, self.alpha_icon, alpha_str, beta_str, self.beta_icon, unpicked_str)
 
     def _startmsg_to_str(self):
@@ -1002,42 +1034,44 @@ class Channel():
             return
 
         if len(args):
-            targetid = args[0].lstrip("<@!").rstrip(">")
-            if not targetid.isdigit():
+            target_id = args[0].lstrip("<@!").rstrip(">")
+            if not target_id.isdigit():
                 client.reply(self.channel, member, "You must specify a highlight!")
                 return
-            targetid = int(targetid)
-            for i in match.unpicked:
-                if i.id == targetid:
-                    team.append(i)
-                    match.unpicked.remove(i)
-                    if len(match.unpicked) == 0 or match.maxplayers == len(match.alpha_team) + len(match.beta_team):
-                        match.next_state()
-                    elif len(match.unpicked) == 1 and match.pick_order:
+            target_id = int(target_id)
+            if target_id <= 10:
+                player = match.unpicked_pool.pick_by_position(target_id)
+            else:
+                player = match.unpicked_pool.pick_by_player_id(target_id)
+
+            if player:
+                team.append(player)
+                if len(match.unpicked_pool) == 0 or match.maxplayers == len(match.alpha_team) + len(match.beta_team):
+                    match.next_state()
+                elif len(match.unpicked_pool) == 1 and match.pick_order:
+                    match.pick_step += 1
+                    if match.pick_order[match.pick_step] == 'a':
+                        match.alpha_team.append(match.unpicked_pool.first())
+                    else:
+                        match.beta_team.append(match.unpicked_pool.first())
+                    match.next_state()
+                else:
+                    msg = match._teams_picking_to_str()
+                    if match.pick_order:
                         match.pick_step += 1
                         if match.pick_order[match.pick_step] == 'a':
-                            match.alpha_team.append(match.unpicked[0])
-                        else:
-                            match.beta_team.append(match.unpicked[0])
-                        match.unpicked.remove(match.unpicked[0])
-                        match.next_state()
-                    else:
-                        msg = match._teams_picking_to_str()
-                        if match.pick_order:
-                            match.pick_step += 1
-                            if match.pick_order[match.pick_step] == 'a':
-                                if len(match.alpha_team):
-                                    who = "<@{0}>".format(match.alpha_team[0].id)
-                                else:
-                                    who = match.team_names[0]
+                            if len(match.alpha_team):
+                                who = "<@{0}>".format(match.alpha_team[0].id)
                             else:
-                                if len(match.beta_team):
-                                    who = "<@{0}>".format(match.beta_team[0].id)
-                                else:
-                                    who = match.team_names[1]
-                            msg += "\n{0}'s turn to pick!".format(who)
-                        client.notice(self.channel, msg)
-                    return
+                                who = match.team_names[0]
+                        else:
+                            if len(match.beta_team):
+                                who = "<@{0}>".format(match.beta_team[0].id)
+                            else:
+                                who = match.team_names[1]
+                        msg += "\n{0}'s turn to pick!".format(who)
+                    client.notice(self.channel, msg)
+                return
             client.reply(self.channel, member, "Specified player are not in unpicked players list.")
         else:
             client.reply(self.channel, member, "You must specify a player to pick!")
