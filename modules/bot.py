@@ -103,6 +103,7 @@ class Match():
         self.channel = pickup.channel.channel
         self.winner = None
         self.unpicked = []
+        self.unpicked_pool = UnpickedPool([])
         self.lastpick = None #fatkid
         self.beta_draw = False
         self.alpha_draw = False
@@ -156,8 +157,7 @@ class Match():
             
             elif self.pick_teams == 'manual':
                 self.pick_step = 0
-                for i, player in players:
-                    self.unpicked.append(Player(player, i))
+                self.unpicked = list(players)
                 self.alpha_team = []
                 self.beta_team = []
                 if self.captains:
@@ -1077,9 +1077,8 @@ class Channel():
             client.reply(self.channel, member, "You must specify a player to pick!")
 
         if len(match.unpicked) == 1:
-            last_player = match.unpicked[0]
+            last_player = match.unpicked_pool.first()
             enemy_team.append(last_player)
-            match.unpicked.remove(last_player)
             match.next_state()
 
     async def put_player(self, member, args, access_level):
