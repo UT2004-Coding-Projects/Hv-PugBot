@@ -815,7 +815,14 @@ class Channel():
                 if member.id in [i.id for i in match.players]:
                     if match.channel.id == self.id and (args == [] or pickup.name.lower() in args):
                         match.players.remove(member)
+                        client.notice(
+                            match.channel,
+                            "**{0}** is not ready!\r\nReverting **{1}** to gathering state...".format(
+                                member.nick or member.name, match.pickup.name
+                            )
+                        )
                         match.ready_fallback()
+
         #update topic and warn player
         if changes != []:
             self.update_topic()
