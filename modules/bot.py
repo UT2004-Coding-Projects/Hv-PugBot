@@ -817,7 +817,7 @@ class Channel():
                         match.players.remove(member)
                         client.notice(
                             match.channel,
-                            "**{0}** is not ready!\r\nReverting **{1}** to gathering state...".format(
+                            "**{0}** left during pick phase! Reverting **{1}** to gathering state...".format(
                                 member.nick or member.name, match.pickup.name
                             )
                         )
