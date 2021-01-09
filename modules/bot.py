@@ -792,6 +792,7 @@ class Channel():
     def remove_player(self, member, args, reason='online'):
         changes = []
         allpickups = True
+        allow_remove_from_active_matches = True
 
         #add pickups from pickup_groups
         for i in list(args):
@@ -809,6 +810,12 @@ class Channel():
                 elif allpickups:
                     allpickups = False
 
+        if allow_remove_from_active_matches:
+            for match in list(active_matches):
+                if member.id in [i.id for i in match.players]:
+                    if match.channel.id == self.id and (args == [] or pickup.name.lower() in args):
+                        match.players.remove(member)
+                        match.ready_fallback()
         #update topic and warn player
         if changes != []:
             self.update_topic()
