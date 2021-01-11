@@ -1137,19 +1137,23 @@ class Channel():
             elif args[1] == match.team_names[1].lower():
                 team = match.beta_team
             elif args[1] == 'unpicked':
-                team = match.unpicked
+                team = match.unpicked_pool
             else:
                 client.reply(self.channel, member, "Team argument must be **{0}**, **{1}** or **unpicked**.".format(*match.team_names))
                 return
 
-            if player in match.unpicked:
-                match.unpicked.remove(player)
+            if player in match.unpicked_pool:
+                player_position =. match.unpicked_pool.find_player(player)
+                match.unpicked_pool.remove(player_position)
             elif player in match.beta_team:
                 match.beta_team.remove(player)
             elif player in match.alpha_team:
                 match.alpha_team.remove(player)
-            team.append(player)
-            if match.state == "teams_picking" and len(match.unpicked) == 0:
+            if args[1] == 'unpicked':
+                match.unpicked_pool.add(player)
+            else:
+                team.append(player)
+            if match.state == "teams_picking" and len(match.unpicked_pool) == 0:
                 match.next_state()
             else:
                 client.notice(self.channel, match._teams_picking_to_str())
