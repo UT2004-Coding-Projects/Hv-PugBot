@@ -1,0 +1,12 @@
+**/.DS_Store
+.venv
+.venv3
+*.pyc
+*.pyo
+*.swp
+.eggs
+*.egg-info
+/build
+/dist
+/.idea
+/.black.diff
