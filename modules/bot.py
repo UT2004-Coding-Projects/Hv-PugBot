@@ -47,6 +47,9 @@ class UnpickedPool():
         del self.position_to_players[position]
         return player
 
+    def get(self, position):
+        return self.position_to_players.get(position)
+
     def pick_by_position(self, position):
         """Pick a player by their position from the arbitrary position assignments they were given."""
         player = self.position_to_players[position]
@@ -61,9 +64,27 @@ class UnpickedPool():
                 self.remove(position)
                 return player
 
+    def find_player(player):
+        for position, player_ in self.position_to_players.items():
+            if player == plpayer_:
+                return position
+
     def remove(self, position):
         """Remove a player by their position in the unpicked pool."""
         del self.position_to_players[position]
+
+    def add(self, player, position):
+        self.position_to_players[position] = player
+
+    def clear(self):
+        """removes all players from unpicked pool."""
+        self.position_to_players = OrderedDict()
+
+    def __contains__(self, player):
+        if self.find_player(player):
+            return True
+        else:
+            return False
 
 
 class Match():
@@ -102,7 +123,6 @@ class Match():
         self.pickup = pickup
         self.channel = pickup.channel.channel
         self.winner = None
-        self.unpicked = []
         self.unpicked_pool = UnpickedPool([])
         self.lastpick = None #fatkid
         self.beta_draw = False
@@ -157,15 +177,16 @@ class Match():
             
             elif self.pick_teams == 'manual':
                 self.pick_step = 0
-                self.unpicked = list(players)
+                unpicked = list(players)
                 self.alpha_team = []
                 self.beta_team = []
                 if self.captains:
                     self.alpha_team.append(self.captains[0])
                     self.beta_team.append(self.captains[1])
-                    self.unpicked.remove(self.captains[0])
-                    self.unpicked.remove(self.captains[1])
-                    self.unpicked_pool = UnpickedPool(self.unpicked)
+                    unpicked.
+                    unpicked.remove(self.captains[0])
+                    unpicked.remove(self.captains[1])
+                    self.unpicked_pool = UnpickedPool(unpicked)
                     
             elif self.pick_teams == 'auto':
                 #form balanced teams by rank
@@ -259,7 +280,15 @@ class Match():
         else:
             beta_str = "❲{0}❳".format(self.team_names[1])
         if self.ranked:
-            unpicked_str = "[" + ", ".join(["`{0}{1}`".format(utils.rating_to_icon(self.ranks[i.id]), (i.nick or i.name).replace("`","")) for i in sorted(self.unpicked, key=lambda p: self.ranks[p.id], reverse=True)]) + "]"
+            player_strs = []
+            for position, player in self.unpicked_pool.all.items():
+                player_strs.apppend(
+                    "`{0}. {1}".format(
+                        utils.rating_to_icon(self.ranks[player.id]),
+                        (player.nick or player.name).repplace("`", "")
+                    )
+                )
+            unpicked_str = "[" + ", ".join(player_strs) + "]"
         else:
             player_strs = []
             for position, player in self.unpicked_pool.all.items():
@@ -401,9 +430,7 @@ class Match():
                 client.notice(self.channel, "```python\n"+summary+"```")
 
     def remove_unpicked(self):
-        for player in self.unpicked:
-            self.players.remove(player)
-        self.unpicked = []
+        self.unpicked_pool.clear()
 
     def cancel_match(self):
         client.notice(self.channel, "{0} your match has been canceled.".format(', '.join(["<@{0}>".format(i.id) for i in self.players])))
@@ -1076,7 +1103,7 @@ class Channel():
         else:
             client.reply(self.channel, member, "You must specify a player to pick!")
 
-        if len(match.unpicked) == 1:
+        if len(match.unpicked_pool) == 1:
             last_player = match.unpicked_pool.first()
             enemy_team.append(last_player)
             match.next_state()
@@ -1161,21 +1188,37 @@ class Channel():
                 client.reply(self.channel, member, "You are already in the players list!")
                 return
 
-            for x in [match.unpicked, match.alpha_team, match.beta_team]:
-                if target in x:
-                    idx = x.index(target)
-                    x[idx] = member
-                    idx = match.players.index(target)
-                    match.players = list(match.players)
+            can_sub = False
+            for team in [match.beta_team, match.alpha_team]:
+                if target in team:
+                    can_sub = True
+                    team_idx = team.index(target)
+                    team[team_idx] = member
+                    player_idx = match.players.index(target)
                     match.players[idx] = member
 
-                    #update ranks table if needed
                     if match.ranked:
                         match.ranks = stats3.get_ranks(self, [i.id for i in match.players])
                         match.players = list(sorted(match.players, key=lambda p: match.ranks[p.id], reverse=True))
 
-                    client.notice(self.channel, match._teams_picking_to_str())
-                    return
+            if target in match.unpicked_pool:
+                can_sub = True
+                target_position = match.find_player(target)
+                match.unpicked_pool.remove(target_position)
+                match.unpicked_pool.add(member, target_position)
+                idx = match.players.index(target)
+                match.players[idx] = member
+                if match.ranked:
+                    match.ranks = stats3.get_ranks(self, [i.id for i in match.players])
+                    match.players = list(sorted(match.players, key=lambda p: match.ranks[p.id], reverse=True))
+
+            if can_sub:
+                if match.ranked:
+                    match.ranks = stats3.get_ranks(self, [i.id for i in match.players])
+                    match.players = list(sorted(match.players, key=lambda p: match.ranks[p.id], reverse=True))
+                client.notice(self.channel, match._teams_picking_to_str())
+                return
+    
             client.reply(self.channel, member, "Specified player not found in the match!")
         else:
             client.reply(self.channel, member, "You must specify a player to substitute!")
@@ -1207,7 +1250,7 @@ class Channel():
             client.reply(self.channel, member, "You must specify the team.")
             return
 
-        for x in [match.unpicked, match.beta_team, match.alpha_team]:
+        for x in [match.beta_team, match.alpha_team]:
             if member in x:
                 idx = x.index(member)
                 if len(team):
@@ -1216,8 +1259,20 @@ class Channel():
                 else:
                     x.remove(member)
                     team.append(member)
-                client.notice(self.channel, match._teams_picking_to_str())
-                return
+        if member in match.unpicked_pool:
+            if len(team):
+                previous_captain = team[0]
+                member_current_position = match.unpicked_pool.find_player(member)
+                match.unpicked_pool.remove(member_current_position)
+                match.unpicked_pool.add(previous_captain, member_current_position)
+                team[0] = member
+            else:
+                team[0] = member
+                member_current_position = match.unpicked_pool.find_player(member)
+                match.unpicked_pool.remove(member_current_position)
+
+        client.notice(self.channel, match._teams_picking_to_str())
+        return
 
     def print_teams(self, member):
         match = self._match_by_player(member)
