@@ -183,7 +183,6 @@ class Match():
                 if self.captains:
                     self.alpha_team.append(self.captains[0])
                     self.beta_team.append(self.captains[1])
-                    unpicked.
                     unpicked.remove(self.captains[0])
                     unpicked.remove(self.captains[1])
                     self.unpicked_pool = UnpickedPool(unpicked)
@@ -1143,7 +1142,7 @@ class Channel():
                 return
 
             if player in match.unpicked_pool:
-                player_position =. match.unpicked_pool.find_player(player)
+                player_position = match.unpicked_pool.find_player(player)
                 match.unpicked_pool.remove(player_position)
             elif player in match.beta_team:
                 match.beta_team.remove(player)
