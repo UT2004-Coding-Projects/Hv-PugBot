@@ -44,7 +44,7 @@ class UnpickedPool():
     def first(self):
         """Return the first player from the unpicked pool from the order they were inserted."""
         position, player = next(iter(self.position_to_players.items()))
-        del self.position_to_players[position]
+        self.remove(position)
         return player
 
     def get(self, position):
@@ -65,6 +65,7 @@ class UnpickedPool():
                 return player
 
     def find_player(player):
+        """Returns a players position if they exist in the unpicked pool"""
         for position, player_ in self.position_to_players.items():
             if player == plpayer_:
                 return position
@@ -74,6 +75,7 @@ class UnpickedPool():
         del self.position_to_players[position]
 
     def add(self, player, position):
+        """Adds a player to the unpicked pool with a pre-assigned position"""
         self.position_to_players[position] = player
 
     def clear(self):
@@ -81,6 +83,7 @@ class UnpickedPool():
         self.position_to_players = OrderedDict()
 
     def __contains__(self, player):
+        """Returns True if player is in unpicked pool else False"""
         if self.find_player(player):
             return True
         else:
