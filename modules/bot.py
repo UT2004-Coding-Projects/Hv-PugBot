@@ -1200,10 +1200,6 @@ class Channel():
                     player_idx = match.players.index(target)
                     match.players[idx] = member
 
-                    if match.ranked:
-                        match.ranks = stats3.get_ranks(self, [i.id for i in match.players])
-                        match.players = list(sorted(match.players, key=lambda p: match.ranks[p.id], reverse=True))
-
             if target in match.unpicked_pool:
                 can_sub = True
                 target_position = match.find_player(target)
@@ -1211,9 +1207,6 @@ class Channel():
                 match.unpicked_pool.add(member, target_position)
                 idx = match.players.index(target)
                 match.players[idx] = member
-                if match.ranked:
-                    match.ranks = stats3.get_ranks(self, [i.id for i in match.players])
-                    match.players = list(sorted(match.players, key=lambda p: match.ranks[p.id], reverse=True))
 
             if can_sub:
                 if match.ranked:
