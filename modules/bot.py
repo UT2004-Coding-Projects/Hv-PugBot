@@ -283,7 +283,7 @@ class Match():
             player_strs = []
             for position, player in self.unpicked_pool.all.items():
                 player_strs.apppend(
-                    "`{0}. {1}".format(
+                    "{0}. `{1}`".format(
                         utils.rating_to_icon(self.ranks[player.id]),
                         (player.nick or player.name).repplace("`", "")
                     )
@@ -293,7 +293,7 @@ class Match():
             player_strs = []
             for position, player in self.unpicked_pool.all.items():
                 player_strs.append(
-                    "`{0}. {1}".format(position, (player.nick or player.name).replace("`",""))
+                    "{0}. `{1}`".format(position, (player.nick or player.name).replace("`",""))
                 )
             unpicked_str = "[" + ", ".join(player_strs) + "]"
         return "{0}\n{1} {2}\n          :fire:**VERSUS**:fire:\n{4} {3}\n\n__Unpicked__:\n{5}".format(match_id_str, self.alpha_icon, alpha_str, beta_str, self.beta_icon, unpicked_str)
@@ -1218,7 +1218,7 @@ class Channel():
                     match.players = list(sorted(match.players, key=lambda p: match.ranks[p.id], reverse=True))
                 client.notice(self.channel, match._teams_picking_to_str())
                 return
-    
+
             client.reply(self.channel, member, "Specified player not found in the match!")
         else:
             client.reply(self.channel, member, "You must specify a player to substitute!")
