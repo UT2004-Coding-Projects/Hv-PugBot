@@ -287,7 +287,7 @@ class Match():
                 player_strs.apppend(
                     "{0}. `{1}`".format(
                         utils.rating_to_icon(self.ranks[player.id]),
-                        (player.nick or player.name).repplace("`", "")
+                        (player.nick or player.name).replace("`", "")
                     )
                 )
             unpicked_str = "[" + ", ".join(player_strs) + "]"
