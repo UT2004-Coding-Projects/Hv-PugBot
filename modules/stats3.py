@@ -157,7 +157,7 @@ def register_pickup(match):
 		else:
 			scores = [0, 1]
 
-	for player in [ player for player in match.players if player not in match.unpicked ]:
+	for player in [player for player in match.players if player not in match.unpicked_pool]:
 		user_name = player.nick or player.name
 		team = None
 		is_lastpick = player == match.lastpick #True or False
