@@ -64,7 +64,7 @@ class UnpickedPool():
                 self.remove(position)
                 return player
 
-    def find_player(player):
+    def find_player(self, player):
         """Returns a players position if they exist in the unpicked pool"""
         for position, player_ in self.position_to_players.items():
             if player == plpayer_:
