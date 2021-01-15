@@ -872,7 +872,7 @@ class Channel():
             if args:
                 client.notice(self.channel, 'No pickups named {} found.'.format(', '.join(args)))
             else:
-                client.notice(self.channel, 'no one added...ZzZz')
+                client.notice(self.channel, 'No active pickups found.')
 
     def user_start_pickup(self, member, args, access_level):
         target = None
