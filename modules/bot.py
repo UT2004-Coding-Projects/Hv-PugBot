@@ -943,13 +943,16 @@ class Channel():
             client.reply(self.channel, member, "You have no right for this!")
 
     def who(self, member, args):
-        templist=[]
+        templist = []
         for pickup in ( pickup for pickup in self.pickups if pickup.players != [] and (pickup.name.lower() in args or args == [])):
             templist.append('[**{0}** ({1}/{2})] {3}'.format(pickup.name, len(pickup.players), pickup.cfg['maxplayers'], '/'.join(["`"+(i.nick or i.name).replace("`","")+"`" for i in pickup.players])))
         if templist != []:
             client.notice(self.channel, ' '.join(templist))
         else:
-            client.notice(self.channel, 'no one added...ZzZz')
+            if args:
+                client.notice(self.channel, 'No pickups named {} found.'.format(', '.join(args)))
+            else:
+                client.notice(self.channel, 'No active pickups found.')
 
     def user_start_pickup(self, member, args, access_level):
         target = None
