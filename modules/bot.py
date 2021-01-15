@@ -283,7 +283,7 @@ class Match():
             beta_str = "❲{0}❳".format(self.team_names[1])
         if self.ranked:
             player_strs = []
-            for position, player in self.unpicked_pool.all.items():
+            for position, player in sorted(self.unpicked_pool.all.items()):
                 player_strs.apppend(
                     "{0}. `{1}`".format(
                         utils.rating_to_icon(self.ranks[player.id]),
@@ -293,7 +293,7 @@ class Match():
             unpicked_str = "[" + ", ".join(player_strs) + "]"
         else:
             player_strs = []
-            for position, player in self.unpicked_pool.all.items():
+            for position, player in sorted(self.unpicked_pool.all.items()):
                 player_strs.append(
                     "{0}. `{1}`".format(position, (player.nick or player.name).replace("`",""))
                 )
