@@ -905,7 +905,7 @@ class Channel():
                                 member.nick or member.name, match.pickup.name
                             )
                         )
-                        match.fallback()
+                        match.pickup_fallback()
 
         #update topic and warn player
         if changes != []:
