@@ -485,10 +485,7 @@ class Match():
             client.delete_message(self.ready_message)
             self.next_state()
 
-    def ready_fallback(self): #if ready event failed
-        if self.ready_message:
-            waiting_reactions.pop(self.ready_message.id)
-            client.delete_message(self.ready_message)
+    def pickup_fallback(self):
         active_matches.remove(self)
         newplayers = list(self.pickup.players)
         self.pickup.players = list(self.players)
@@ -500,6 +497,13 @@ class Match():
         if len(self.pickup.players):
             active_pickups.append(self.pickup)
         self.pickup.channel.update_topic()
+
+    def ready_fallback(self): #if ready event failed
+        if self.ready_message:
+            waiting_reactions.pop(self.ready_message.id)
+            client.delete_message(self.ready_message)
+
+        self.pickup_fallback()
 
     def ready_end(self):
         #client.notice(self.channel, "All players ready @ **{0}** pickup!".format(self.pickup.name))
@@ -901,7 +905,7 @@ class Channel():
                                 member.nick or member.name, match.pickup.name
                             )
                         )
-                        match.ready_fallback()
+                        match.pickup_fallback()
 
         #update topic and warn player
         if changes != []:
