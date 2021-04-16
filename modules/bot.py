@@ -764,6 +764,9 @@ class Channel():
             elif lower[0]=="reset":
                 self.reset_players(member, lower[1:msglen], access_level)
 
+            elif lower[0]=="reset_picks":
+                self.reset_picks(member, access_level)
+
             elif lower[0]=="reset_stats":
                 self.reset_stats(member, access_level)
 
@@ -2112,6 +2115,28 @@ class Channel():
                 self.update_topic()
                 if comment:
                     client.notice(self.channel, comment)
+        else:
+            client.reply(self.channel, member, "You have no right for this!")
+
+    def reset_picks(self, member, access_level):
+        if access_level > 1:
+            for match in list(active_matches):
+                if member.id in [player.id for player in match.players]:
+                    if match.channel.id == self.id:
+                        if match.state == 'teams_picking':
+                            picked_players = match.alpha_team + match.beta_team:
+                            picked_players.extend(
+                                list(match.unpicked_pool.position_to_players.values())
+                            )
+
+                            match.unpicked_pool = UnpickedPool(picked_players)
+                            match.alpha_team, match.beta_team, match.captains = [], [], []
+                            while len(match.captains) < 2:
+                                random_position = random.choice(range(len(match.unpicked_pool)))
+                                match.captains.append(match.unpicked_pool.pick_by_position(random_position))
+
+                            client.notice(match.channel, "Resetting captains and picks...")
+                            match.print_startmsg_teams_picking_start()
         else:
             client.reply(self.channel, member, "You have no right for this!")
 
