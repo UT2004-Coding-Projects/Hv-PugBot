@@ -684,7 +684,8 @@ class Channel():
                 await self.put_player(member, lower[1:3], access_level)
 
             elif lower[0]=="capfor":
-                self.capfor(member, lower[1:2])
+                if self.cfg['capfor_enabled'] == 1:
+                    self.capfor(member, lower[1:2])
 
             elif lower[0]=="subfor":
                 await self.subfor(member, lower[1:2])
@@ -2348,6 +2349,16 @@ class Channel():
                 client.reply(self.channel, member, "Set '{0}' {1} as default value".format(value, variable))
             else:
                 client.reply(self.channel, member, "{0} value must be exactly two words.".format(variable))
+
+        elif variable == "capfor_enabled":
+            if value.lower() == '1':
+                self.update_channel_config(variable, 1)
+                client.reply(self.channel, member, "Enabled capfor")
+            elif value.lower() == '0':
+                self.update_channel_config(variable, 0)
+                client.reply(self.channel, member, "Disabled capfor")
+            else:
+                client.reply(self.channel, member, "{0} value must be exactly 0 (disabled) or 1 (enabled)".format(variable))
 
         elif variable == "pick_teams":
             value = value.lower()
