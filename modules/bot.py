@@ -2135,6 +2135,7 @@ class Channel():
                                 random_position = random.choice(range(len(match.unpicked_pool)))
                                 match.captains.append(match.unpicked_pool.pick_by_position(random_position))
 
+                            match.pick_step = 0
                             client.notice(match.channel, "Resetting captains and picks...")
                             match.print_startmsg_teams_picking_start()
         else:
