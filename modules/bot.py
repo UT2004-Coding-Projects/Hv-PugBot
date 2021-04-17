@@ -177,7 +177,7 @@ class Match():
             if self.pick_teams == 'no_teams' or self.pick_teams == None:
                 self.alpha_team = None
                 self.beta_team = None
-            
+
             elif self.pick_teams == 'manual':
                 self.pick_step = 0
                 unpicked = list(players)
@@ -189,7 +189,7 @@ class Match():
                     unpicked.remove(self.captains[0])
                     unpicked.remove(self.captains[1])
                     self.unpicked_pool = UnpickedPool(unpicked)
-                    
+
             elif self.pick_teams == 'auto':
                 #form balanced teams by rank
                 if self.ranked:
@@ -211,7 +211,7 @@ class Match():
                             sorted(self.alpha_team, key=lambda p: self.captains_role in [role.id for role in p.roles], reverse=True)[0],
                             sorted(self.beta_team, key=lambda p: self.captains_role in [role.id for role in p.roles], reverse=True)[0]
                         ]
-                        
+
 
                 #generate random teams
                 else:
@@ -262,7 +262,7 @@ class Match():
             return "{0} :fire:**VERSUS**:fire: {1}".format(alpha_str, beta_str)
         else:
             return "{0} ❲{1}❳ {4}\r\n          :fire: **VERSUS** :fire:\r\n{2} ❲{3}❳ {5}".format(self.alpha_icon, alpha_str, self.beta_icon, beta_str, *team_ratings)
-            
+
     def _teams_picking_to_str(self):
         match_id_str = "**Match {0}**".format(self.id)
         if len(self.alpha_team):
@@ -321,7 +321,7 @@ class Match():
             startmsg = "__*({0})* **{1}** pickup has been started!__ ".format(str(self.id), self.pickup.name)
         else:
             startmsg = "__**{0}** pickup has been started!__ ".format(self.pickup.name)
-        
+
         if self.beta_team and self.alpha_team:
             if len(self.players) > 2:
                 startmsg += "\r\n\r\n"+self._teams_to_str()+"\r\n\r\n"
@@ -373,7 +373,7 @@ class Match():
             startmsg += "\r\nSuggested map: **{0}**.".format(self.map)
         client.notice(self.channel, startmsg)
         client.notice(self.channel, self._startmsg_to_str())
-        
+
     def next_state(self):
         if self.state == 'none':
             if self.require_ready:
@@ -452,7 +452,7 @@ class Match():
         for emoji in [ready_emoji, '🔸', notready_emoji]:
             client.add_reaction(message, emoji)
         self.ready_refresh()
-        
+
     def process_ready_reaction(self, action, reaction, user):
         if user not in self.players or self.state != 'waiting_ready':
             return
@@ -540,7 +540,7 @@ class Channel():
         self.oldtopic = '[**no pickups**]'
         self.to_remove = [] #players
         self.waiting_messages = dict() #{msg_code: function}
-        
+
     def init_pickups(self):
         pickups = stats3.get_pickups(self.id)
         for i in pickups:
@@ -548,7 +548,7 @@ class Channel():
                 self.pickups.append(Pickup(self, i))
             except Exception as e:
                 console.display("ERROR| Failed to init a pickup of channel {0}({1}) @ {2}.".format(self.name, self.id, str(e)))
-            
+
     def start_pickup(self, pickup):
         if len(pickup.players) < 2:
             client.notice(self.channel, "Pickup must have atleast 2 players added to start...")
@@ -628,7 +628,7 @@ class Channel():
 
             elif lower[0] in ["remove", "l"]:
                 self.remove_player(member, lower[1:msglen])
-				
+
             elif lower[0]=="lva":
                 self.remove_player(member,[])
 
@@ -745,7 +745,7 @@ class Channel():
 
             elif lower[0]=="maps":
                 self.show_maps(member, lower[1:msglen], False)
-            
+
             elif lower[0]=="map":
                 self.show_maps(member, lower[1:msglen], True)
 
@@ -772,7 +772,7 @@ class Channel():
 
             elif lower[0]=="phrase":
                 await self.set_phrase(member, msgtup[1:msglen], access_level)
-    
+
             elif lower[0]=="commands":
                 client.reply(self.channel, member, config.cfg.COMMANDS_LINK)
 
@@ -813,7 +813,7 @@ class Channel():
 
                 elif lower[0]=="seed":
                     await self.seed_player(member, lower[1:msglen], access_level)
-            
+
     ### COMMANDS ###
 
     def add_player(self, member, target_pickups):
@@ -821,7 +821,7 @@ class Channel():
         if match:
             client.reply(self.channel, member, "You are already in an active match.")
             return
-    
+
         #check noadds and phrases
         l = stats3.check_memberid(self.id, member.id) #is_banned, phrase, default_expire
         if l[0] == True: # if banned
@@ -841,7 +841,7 @@ class Channel():
                         target_pickups.remove(i)
                         target_pickups += self.pickup_groups[i]
                 filtered_pickups = list(filter(lambda p: p.name.lower() in target_pickups, self.pickups))
-                    
+
         for pickup in filtered_pickups:
             if not member.id in [i.id for i in pickup.players]:
                 #check if pickup have blacklist or whitelist
@@ -850,7 +850,7 @@ class Channel():
                 member_roles = [r.id for r in member.roles]
                 if blacklist_role in member_roles:
                     client.reply(self.channel, member, "You are not allowed to play {0} (blacklisted).".format(pickup.name))
-                
+
                 elif not whitelist_role or whitelist_role in member_roles:
                     changes = True
                     pickup.players.append(member)
@@ -1014,10 +1014,10 @@ class Channel():
             submsg = self.get_value('submsg', self.lastgame_pickup)
             if not submsg:
                 submsg = "%promotion_role% NEED SUB @ **%pickup_name%**, please connect to %ip%."
-                    
+
             submsg = submsg.replace("%pickup_name%", self.lastgame_pickup.name)
             submsg = submsg.replace("%ip%", ip or "")
-            submsg = submsg.replace("%password%", password or "") 
+            submsg = submsg.replace("%password%", password or "")
             submsg = submsg.replace("%promotion_role%", str(promotion_role or ""))
 
             promotion_role = self.get_value('promotion_role', self.lastgame_pickup)
@@ -1067,7 +1067,7 @@ class Channel():
         if not match:
             client.reply(self.channel, member, "Could not find an active match.")
             return
-            
+
         if match.state != "teams_picking":
             client.reply(self.channel, member, "The match is not on teams picking stage.")
             return
@@ -1208,7 +1208,7 @@ class Channel():
             else:
                 client.reply(self.channel, member, "You must specify a highlight.")
                 return
-            
+
 
             if not match:
                 client.reply(self.channel, member, "Could not find an active match.")
@@ -1255,7 +1255,7 @@ class Channel():
         if not match:
             client.reply(self.channel, member, "Could not find an active match.")
             return
-            
+
         if match.state != "teams_picking":
             client.reply(self.channel, member, "The match is not on the teams picking stage.")
             return
@@ -1306,7 +1306,7 @@ class Channel():
         if not match:
             client.reply(self.channel, member, "Could not find an active match.")
             return
-        
+
         if match.pick_teams != "no_teams" and match.state != 'waiting_ready':
             client.notice(self.channel, match._teams_picking_to_str())
         else:
@@ -1533,7 +1533,7 @@ class Channel():
 
         reply = stats3.undo_ranks(self.id, int(args[0]))
         client.notice(self.channel, reply)
-        
+
     def reset_ranks(self, member, access_level):
         if access_level < 2:
             client.reply(self.channel, member, "You must posses administrator rights to use this command.")
@@ -1639,7 +1639,7 @@ class Channel():
                 edit_role = False
                 if promotion_role:
                     role_obj = client.find_role_by_id(self.channel, promotion_role)
-                    if role_obj:                    
+                    if role_obj:
                         if not role_obj.mentionable:
                             try:
                                 await client.edit_role(role_obj, mentionable = True)
@@ -1663,7 +1663,7 @@ class Channel():
                         for player in remove_role_players:
                             await client.add_roles(player, role_obj)
                         await client.edit_role(role_obj, mentionable = False)
-                
+
             else:
                 promotemsg = self.cfg['promotemsg'] or "%promotion_role% please !add to pickups!"
                 if self.cfg["promotion_role"]:
@@ -1729,7 +1729,7 @@ class Channel():
         if not added:
             client.reply(self.channel, member, "You must be added first!")
             return
-            
+
         #set expire if time is specified
         if timelist != []:
             try:
@@ -1754,7 +1754,7 @@ class Channel():
                 return
 
             timeint=scheduler.tasks[member.id][0]
-            
+
             client.reply(self.channel, member, "You will be removed in {0}".format(str(datetime.timedelta(seconds=int(timeint-time.time()))),))
 #next
     def default_expire(self, member, timelist):
@@ -1796,7 +1796,7 @@ class Channel():
         else:
             allowoffline.append(member)
             client.reply(self.channel, member, "You will have offline/afk immune until your next pickup.")
-            
+
     def getstats(self, member, target):
         if target == []:
             s = stats3.stats(self.id)
@@ -1829,7 +1829,7 @@ class Channel():
         else:
             client.reply(self.channel, member, "Bad argument.")
             return
-        
+
         top10=stats3.top(self.id, timegap, pickup)
         if top10:
             if pickup:
@@ -1957,7 +1957,7 @@ class Channel():
         for i in self.pickup_groups.keys():
             msg += "\r\n**{0}**: [{1}]".format(i, ", ".join(self.pickup_groups[i]))
         client.notice(self.channel, msg)
-            
+
     def show_maps(self, member, args, pick):
         if len(args):
             pickupname = args[0].lower()
@@ -2054,7 +2054,7 @@ class Channel():
 
                 if len(args):
                     reason = " ".join(args)
-                    
+
             else:
                 client.reply(self.channel, member, "Target must be a Member highlight.")
                 return
@@ -2124,7 +2124,7 @@ class Channel():
                 if member.id in [player.id for player in match.players]:
                     if match.channel.id == self.id:
                         if match.state == 'teams_picking':
-                            picked_players = match.alpha_team + match.beta_team:
+                            picked_players = match.alpha_team + match.beta_team
                             picked_players.extend(
                                 list(match.unpicked_pool.position_to_players.values())
                             )
@@ -2231,7 +2231,7 @@ class Channel():
                     client.reply(self.channel, member, "Set '{0}' {1} as default value".format(role.name, variable))
                 else:
                     client.reply(self.channel, member, "Role '{0}' not found on this discord server".format(value))
-            
+
         elif variable == "captains_role":
             if value.lower() == "none":
                 self.update_channel_config(variable, None)
@@ -2493,7 +2493,7 @@ class Channel():
                     client.reply(self.channel, member, "Set '{0}' {1} as default value".format(role.name, variable))
                 else:
                     client.reply(self.channel, member, "Role '{0}' not found on this discord server".format(value))
-                
+
         elif variable == "require_ready":
             if value.lower() == 'none':
                 self.update_channel_config(variable, None)
