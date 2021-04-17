@@ -564,10 +564,10 @@ def check_db():
             ADD COLUMN `help_answer` TEXT
             """)
 
-                if db_version < 14:
-                        c.execute("""ALTER TABLE `channels`
-                        ADD COLUMN `capfor_enabled` INT DEFAULT 1
-                        """)
+        if db_version < 14:
+                c.execute("""ALTER TABLE `channels`
+                ADD COLUMN `capfor_enabled` INT DEFAULT 1
+                """)
 
         c.execute("INSERT OR REPLACE INTO utility (variable, value) VALUES ('version', ?)", (str(version), ))
         conn.commit()
