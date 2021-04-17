@@ -8,7 +8,7 @@ from decimal import Decimal
 from modules import console
 
 #INIT
-version = 12
+version = 13
 def init():
 	global conn, c, last_match
 	dbexists = isfile("database.sqlite3")
@@ -563,6 +563,11 @@ def check_db():
 			c.execute("""ALTER TABLE `pickup_configs`
 			ADD COLUMN `help_answer` TEXT
 			""")
+
+                if db_version < 14:
+                        c.execute("""ALTER TABLE `channels`
+                        ADD COLUMN `capfor_enabled` INT DEFAULT 1
+                        """)
 
 		c.execute("INSERT OR REPLACE INTO utility (variable, value) VALUES ('version', ?)", (str(version), ))
 		conn.commit()
