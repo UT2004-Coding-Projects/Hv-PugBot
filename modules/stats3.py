@@ -85,7 +85,7 @@ def new_pickup(channel_id, pickup_name, maxplayers):
 	c.execute("SELECT * from pickup_configs WHERE channel_id = ? AND pickup_name = ?", (channel_id, pickup_name))
 	result = c.fetchone()
 	return dict(result)
-	
+
 
 def delete_pickup(channel_id, pickup_name):
 	c.execute("DELETE FROM pickup_configs WHERE channel_id = ? AND pickup_name = ? COLLATE NOCASE", (channel_id, pickup_name))
@@ -265,7 +265,7 @@ def stats(channel_id, text=False):
 			pickups = []
 			total = 0
 			for i in l:
-				pickups.append("{0}: {1}".format(i[0], i[1])) 
+				pickups.append("{0}: {1}".format(i[0], i[1]))
 				total += i[1]
 			return "Total pickups: {0} | {1}".format(total, ", ".join(pickups))
 		else:
@@ -294,7 +294,7 @@ def stats(channel_id, text=False):
 				user_name = l[1]
 			else:
 				return "Nothing found."
-			
+
 			c.execute("SELECT pickup_name, count(pickup_name) FROM player_pickups WHERE channel_id = ? AND user_id = ? GROUP BY pickup_name", (channel_id, user_id))
 			l = c.fetchall()
 			pickups = []
@@ -397,7 +397,7 @@ def check_memberid(channel_id, user_id): #check on bans and phrases
 		phrase = l[0]
 	else:
 		phrase = None
-		
+
 	return( (False, phrase, expire) )
 
 #get default user !expire time
@@ -421,7 +421,7 @@ def set_phrase(channel_id, user_id, phrase):
 	c.execute("INSERT OR IGNORE INTO channel_players (channel_id, user_id) VALUES (?, ?)", (channel_id, user_id))
 	c.execute("UPDATE channel_players SET phrase = ? WHERE user_id = ? AND channel_id = ?", (phrase, user_id, channel_id ))
 	conn.commit()
-		
+
 def save_config(channel_id, cfg, pickups):
 	c.execute("INSERT OR REPLACE INTO channels VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (*cfg.values(), ))
 	for i in pickups:
@@ -573,7 +573,7 @@ def create_tables():
 		`value` TEXT,
 		PRIMARY KEY(`variable`) )""")
 
-	c.execute("""CREATE TABLE `bans` 
+	c.execute("""CREATE TABLE `bans`
 		( `channel_id` INTEGER,
 		`user_id` INTEGER,
 		`user_name` TEXT,
@@ -584,7 +584,7 @@ def create_tables():
 		`author_name` TEXT,
 		`unban_author_name` TEXT )""")
 
-	c.execute("""CREATE TABLE `channel_players` 
+	c.execute("""CREATE TABLE `channel_players`
 		( `channel_id` INTEGER,
 		`user_id` INTEGER,
 		`nick` TEXT,
@@ -596,7 +596,7 @@ def create_tables():
 		`phrase` TEXT,
 		PRIMARY KEY(`channel_id`, `user_id`) )""")
 
-	c.execute("""CREATE TABLE `channels` 
+	c.execute("""CREATE TABLE `channels`
 		( `server_id` INTEGER,
 		`server_name` TEXT,
 		`channel_id` INTEGER,
@@ -637,9 +637,10 @@ def create_tables():
 		`autostart` INTEGER DEFAULT 1,
 		`help_answer` TEXT,
 		`start_pm_msg` TEXT DEFAULT '**%pickup_name%** pickup has been started @ %channel%.',
+                `capfor_enabled` INTEGER DEFAULT 1,
 		PRIMARY KEY(`channel_id`) )""")
 
-	c.execute("""CREATE TABLE `pickup_configs` 
+	c.execute("""CREATE TABLE `pickup_configs`
 		( `channel_id` INTEGER,
 		`pickup_name` TEXT,
 		`maxplayers` INTEGER,
@@ -668,7 +669,7 @@ def create_tables():
 		`help_answer` TEXT,
 		PRIMARY KEY(`channel_id`, `pickup_name`) )""")
 
-	c.execute("""CREATE TABLE `pickups` 
+	c.execute("""CREATE TABLE `pickups`
 		( `pickup_id` INTEGER PRIMARY KEY,
 		`channel_id` INTEGER,
 		`pickup_name` TEXT,
@@ -679,7 +680,7 @@ def create_tables():
 		`is_ranked` BOOL,
 		`winner_team` TEXT )""")
 
-	c.execute("""CREATE TABLE `player_pickups` 
+	c.execute("""CREATE TABLE `player_pickups`
 		( `pickup_id` INTEGER,
 		`channel_id` INTEGER,
 		`user_id` INTEGER,
@@ -693,13 +694,13 @@ def create_tables():
 		`rank_change` INTEGER,
 		`is_lastpick` BLOB)""")
 
-	c.execute("""CREATE TABLE `players` 
+	c.execute("""CREATE TABLE `players`
 		( `user_id` INTEGER,
 		`default_expire` INTEGER,
 		`disable_pm` BLOB,
 		PRIMARY KEY(`user_id`) )""")
 
-	c.execute("""CREATE TABLE `pickup_groups` 
+	c.execute("""CREATE TABLE `pickup_groups`
 		( `channel_id` INTEGER,
 		`group_name` TEXT,
 		`pickup_names` TEXT,
