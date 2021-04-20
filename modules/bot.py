@@ -2132,7 +2132,7 @@ class Channel():
                             match.unpicked_pool = UnpickedPool(picked_players)
                             match.alpha_team, match.beta_team, match.captains = [], [], []
                             while len(match.captains) < 2:
-                                random_position = random.choice(range(1, len(match.unpicked_pool)) + 1)
+                                random_position = random.choice(range(1, len(match.unpicked_pool) + 1))
                                 match.captains.append(match.unpicked_pool.pick_by_position(random_position))
 
                             match.pick_step = 0
