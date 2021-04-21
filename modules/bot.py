@@ -2140,10 +2140,10 @@ class Channel():
                             match.alpha_team.append(match.captains[0])
                             match.beta_team.append(match.captains[1])
 
-                            client.notice(match.channel, "Resetting captains and picks...")
+                            client.notice(self.channel, "Resetting captains and picks...")
                             match.print_startmsg_teams_picking_start()
         else:
-            client.reply(self.channels, member, "You have no right for this!")
+            client.reply(self.channel, member, "You have no right for this!")
 
     def reset_stats(self, member, access_level):
         if access_level > 1:
