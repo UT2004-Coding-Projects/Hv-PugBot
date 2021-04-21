@@ -2132,7 +2132,7 @@ class Channel():
             else:
                 for match_ in list(active_matches):
                     if member.id in [player.id for player in match_.players]:
-                        if match.channel.id == self.id:
+                        if match_.channel.id == self.id:
                             match = match_
             # if match is successfully found, reset picks
             if match:
