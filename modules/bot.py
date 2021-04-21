@@ -2118,19 +2118,6 @@ class Channel():
         else:
             client.reply(self.channel, member, "You have no right for this!")
 
-            elif self.pick_teams == 'manual':
-                self.pick_step = 0
-                unpicked = list(players)
-                self.alpha_team = []
-                self.beta_team = []
-                if self.captains:
-                    self.alpha_team.append(self.captains[0])
-                    self.beta_team.append(self.captains[1])
-                    unpicked.remove(self.captains[0])
-                    unpicked.remove(self.captains[1])
-                    self.unpicked_pool = UnpickedPool(unpicked)
-
-
     def reset_picks(self, member, access_level):
         if access_level > 1:
             for match in list(active_matches):
