@@ -1129,8 +1129,8 @@ class Channel():
                                 who = match.team_names[1]
                         msg += "\n{0}'s turn to pick!".format(who)
                     client.notice(self.channel, msg)
-
-            client.reply(self.channel, member, "Specified player are not in unpicked players list.")
+            else:
+                client.reply(self.channel, member, "Specified player are not in unpicked players list.")
         else:
             client.reply(self.channel, member, "You must specify a player to pick!")
 
