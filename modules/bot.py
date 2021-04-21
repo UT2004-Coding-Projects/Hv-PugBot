@@ -1091,6 +1091,12 @@ class Channel():
             client.reply(self.channel, member, "You are not a captain.")
             return
 
+        client.reply(self.channel,
+                member, 
+                f"Match state is.. unpicked: {match.unpicked_pool.all}, state: {match.state}, team: {team}, enemy_team: {enemy_team}"
+            )
+
+
         if len(args):
             target_id = args[0].lstrip("<@!").rstrip(">")
             if not target_id.isdigit():
@@ -1129,7 +1135,7 @@ class Channel():
                                 who = match.team_names[1]
                         msg += "\n{0}'s turn to pick!".format(who)
                     client.notice(self.channel, msg)
-                return
+
             client.reply(self.channel, member, "Specified player are not in unpicked players list.")
         else:
             client.reply(self.channel, member, "You must specify a player to pick!")
