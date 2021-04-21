@@ -1135,6 +1135,9 @@ class Channel():
             client.reply(self.channel, member, "You must specify a player to pick!")
 
         if len(match.unpicked_pool) == 1:
+            client.reply(self.channel,
+                member, 
+                f"Match state is.. unpicked: {match.unpicked_pool.all}, state: {match.state}, team: {team}, enemy_team: {enemy_team}")
             last_player = match.unpicked_pool.first()
             enemy_team.append(last_player)
             match.next_state()
