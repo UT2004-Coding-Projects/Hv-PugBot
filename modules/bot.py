@@ -2120,7 +2120,7 @@ class Channel():
             client.reply(self.channel, member, "You have no right for this!")
 
     def reset_picks(self, member, access_level):
-        if access_level > 1:
+        if access_level >= 1:
             for match in list(active_matches):
                 if member.id in [player.id for player in match.players]:
                     if match.channel.id == self.id:
