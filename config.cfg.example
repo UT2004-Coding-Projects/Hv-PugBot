@@ -1,0 +1,8 @@
+DISCORD_TOKEN = "ADD_TOKEN"
+# Delay between backups, hours
+BACKUP_TIME = 6
+# Number of backups to keep
+KEEP_BACKUPS = 5
+COMMANDS_LINK = "https://link-to-commands"
+HELPINFO = "A helpful message"
+FIRST_INIT_MESSAGE="Pickups enabled"

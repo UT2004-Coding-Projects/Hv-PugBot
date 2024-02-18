@@ -10,3 +10,7 @@
 /dist
 /.idea
 /.black.diff
+
+database.sqlite3
+logs/
+config.cfg
