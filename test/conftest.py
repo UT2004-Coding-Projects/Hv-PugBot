@@ -5,10 +5,13 @@ import asyncio
 import discord
 import discord.ext.test as dpytest
 
+from pubobot import console, scheduler, bot, stats3, config, client
 
-@pytest_asyncio.fixture(scope="session")
-async def bot(tmp_path_factory):
-    from pubobot import console, scheduler, bot, stats3, config, client
+
+@pytest_asyncio.fixture(scope="session", autouse=True)
+async def pbot(tmp_path_factory):
+    # Recreate client with the pytest-asyncio event loop
+    client.c = client.create_client()
 
     # Always use a clean database
     db = tmp_path_factory.mktemp("pubobot_tests") / "db.sqlite3"
