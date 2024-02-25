@@ -16,7 +16,8 @@
 !pickups - list of all pickups on the channel.   
 !pickup_groups - list of pickup groups configured on the channel.   
 !expire - shows you how much time left before you will be removed from all pickups.   
-!lastgame [<i>@nick</i> or <i>pickup</i>] - show last pickup, or last pickup by specified argument.   
+!lastgame [<i>@nick</i> or <i>pickup</i>] - show last pickup, or last pickup by specified argument.
+.liast [<i>void</i> or <i>mode</i>] - show last pickup and list of current players in.
 !top [<i>pickup<i>] [weekly or monthly or yearly] - shows you most active players.   
 !stats [<i>nick</i> or <i>pickup</i>] - shows you overall stats or stats for specified argument.   
 !ip [<i>pickup</i> or default] - shows you ip of last pickup or specified pickup.   

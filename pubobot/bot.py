@@ -892,6 +892,10 @@ class Channel:
             elif lower[0] == "last":
                 self.lastgame(member, msgtup[1:msglen])
 
+            elif lower[0] == "liast":
+                self.who(member, lower[1:msglen])
+                self.lastgame(member, msgtup[1:msglen])
+
             elif lower[0] == "sub":
                 await self.sub_request(member)
 
