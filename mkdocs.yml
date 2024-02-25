@@ -1,0 +1,10 @@
+site_name: Commands
+nav:
+  - Home: index.md
+  - Commands: commands.md
+
+theme:
+  name: material
+
+markdown_extensions:
+  - admonition

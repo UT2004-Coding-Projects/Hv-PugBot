@@ -3,6 +3,6 @@ DISCORD_TOKEN = "ADD_TOKEN"
 BACKUP_TIME = 6
 # Number of backups to keep
 KEEP_BACKUPS = 5
-COMMANDS_LINK = "https://link-to-commands"
+COMMANDS_LINK = "https://dcramps.github.io/Pubobot/commands"
 HELPINFO = "A helpful message"
 FIRST_INIT_MESSAGE="Pickups enabled"
