@@ -27,6 +27,7 @@
 
 # Python Black diff file
 /.black.diff
+/.python-version
 
 # Application specific files
 database.sqlite3
