@@ -7,7 +7,7 @@
 | `.remove pickup[ pickup ...] or -[pickup[ pickup ..]]`  | Removes you from specified pickups.                                                           |
 | `.remove or --`                                 | Removes you from all pickups.                                                                  |
 | `.expire time`                                     | Sets new time delay after you will be removed from all pickups, example: '.expire 1h 2m 3s'. |
-| `.default_expire time`, 'afk' or 'none'   | Set your personal default .expire time or set autoremove on afk status.                         |
+| `.default_expire time, 'afk' or 'none'`   | Set your personal default .expire time or set autoremove on afk status.                         |
 | `.sub`                                           | Request sub for last game.                                                                     |
 | `.allowoffline or .ao`                          | Gives you immunity from getting removed by offline or afk statuses until a pickup with you starts. (done for mobile devices users). |
 | `.subscribe pickup[ pickup ..]]`  | Adds the promotion role of specified pickup(s) to you.                                         |
@@ -39,7 +39,7 @@
 | `.put @nick alpha or beta`               | Put player in specified team (available only for users with moderator or admin rights).          |
 | `.subfor @nick`                          | Become a substitute for specified player.                                                        |
 | `.capfor alpha or beta`                         | Become a captain of specified team.                                                             |
-| `.teams`                                        | Show teams for current pickup.                                                                  |
+| `.teams or .turn`                               | Show teams for current pickup.                                                                  |
 
 ## Ranking
 
