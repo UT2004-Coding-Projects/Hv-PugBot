@@ -215,8 +215,8 @@ class Match:
                     self.captains = random.sample(self.players, 2)
 
             elif pick_captains == 1 and self.captains_role:
-                self.captains: List[discord.Member] = []
-                candidates: List[discord.Member] = list(
+                self.captains: List[Member] = []
+                candidates: List[Member] = list(
                     filter(
                         lambda x: self.captains_role in [role.id for role in x.roles],
                         self.players,
@@ -265,8 +265,8 @@ class Match:
             elif self.pick_teams == "manual":
                 self.pick_step = 0
                 unpicked = list(players)
-                self.alpha_team: List[discord.Member] = []
-                self.beta_team: List[discord.Member] = []
+                self.alpha_team: List[Member] = []
+                self.beta_team: List[Member] = []
                 if self.captains:
                     self.alpha_team.append(self.captains[0])
                     self.beta_team.append(self.captains[1])
@@ -346,10 +346,10 @@ class Match:
 
                 client.notice(
                     self.channel,
-                    f"{not_ready_str} {was_were} not ready in time!\r\nReverting **{game}** pickup to gathering state...",
+                    f"{not_ready_str} {was_were} not ready in time!\r\nReverting **{self.pickup.name}** pickup to gathering state...",
                 )
 
-                self.players: List[discord.Member] = list(
+                self.players: List[Member] = list(
                     filter(lambda x: x.id in self.players_ready, self.players)
                 )
                 self.ready_fallback()
@@ -680,7 +680,7 @@ class ReadyMark:
 
 class Pickup:
     def __init__(self, channel, cfg):
-        self.players: List[discord.Member] = []
+        self.players: List[Member] = []
         self.users_last_ready = {}
         self.name = cfg["pickup_name"]
         self.lastmap = None
@@ -839,6 +839,7 @@ class Channel:
                     msg.guild, msg.channel, msg.author.display_name, msg.content
                 )
             )
+
             if lower[0] in ["add", "j"]:
                 self.add_player(member, lower[1:msglen])
 
@@ -878,11 +879,11 @@ class Channel:
             elif lower[0] == "unsubscribe":
                 await self.subscribe(member, lower[1:msglen], True)
 
-            elif lower[0] == "lastgame":
-                self.lastgame(member, msgtup[1:msglen])
-
-            elif lower[0] == "last":
-                self.lastgame(member, msgtup[1:msglen])
+            elif last_match := re.match(r"last(t*)", lower[0]):
+                t_count = len(last_match.group(1))
+                # dont let mouthbreathers do lasttttttttttttttttttttttttttttttttttttt
+                if t_count <= 5:
+                    self.lastgame(member, msgtup[1:msglen], t_count)
 
             elif lower[0] == "liast":
                 self.who(member, lower[1:msglen])
@@ -1270,13 +1271,16 @@ class Channel:
         else:
             client.reply(self.channel, member, "You have no right for this!")
 
-    def lastgame(self, member, args):
-        if args != []:
-            l = stats3.lastgame(
-                self.id, args[0]
-            )  # id, ago, gametype, players, alpha_players, beta_players
-        else:
+    def lastgame(self, member, args, index):
+        # `.last` -- use cache
+        if args == [] and index == 0:
             l = self.lastgame_cache
+        # `.last[tttt] [gametype]` -- use db
+        else:
+            l = stats3.lastgame(
+                self.id, args[0] if args else None, index
+            )  # id, ago, gametype, players, alpha_players, beta_players
+
         if l:
             pickup_num = l[0]
             ago = datetime.timedelta(seconds=int(time.time() - int(l[1])))

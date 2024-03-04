@@ -343,26 +343,25 @@ def register_pickup(match):
     return new_ranks
 
 
-def lastgame(channel_id, text=False):  # [id, gametype, ago, [players], [caps]]
-    if not text:  # return lastest game
-        c.execute(
-            "SELECT pickup_id, at, pickup_name, players, alpha_players, beta_players, winner_team FROM pickups WHERE channel_id = ? ORDER BY pickup_id DESC LIMIT 1",
-            (channel_id,),
-        )
+def lastgame(channel_id, text=False, offset=0):
+    select_statement = "SELECT pickup_id, at, pickup_name, players, alpha_players, beta_players, winner_team FROM pickups WHERE channel_id = ?"
+    if not text:
+        query = "{} ORDER BY pickup_id DESC LIMIT 1 OFFSET ?".format(select_statement)
+        c.execute(query, (channel_id, offset))
         result = c.fetchone()
     else:
-        # try to find last game by gametype
-        c.execute(
-            "SELECT pickup_id, at, pickup_name, players, alpha_players, beta_players, winner_team FROM pickups WHERE channel_id = ? and pickup_name = ? ORDER BY pickup_id DESC LIMIT 1 COLLATE NOCASE",
-            (channel_id, text),
+        query = "{} AND pickup_name = ? ORDER BY pickup_id DESC LIMIT 1 OFFSET ? COLLATE NOCASE".format(
+            select_statement
         )
+        c.execute(query, (channel_id, text, offset))
         result = c.fetchone()
-        if result == None:  # no results, try to find last game by player
-            c.execute(
-                "SELECT pickup_id, at, pickup_name, players, alpha_players, beta_players, winner_team FROM pickups WHERE channel_id = '{0}' and players LIKE '% {1} %' ORDER BY pickup_id DESC LIMIT 1".format(
-                    channel_id, text
+        if result is None:
+            query = (
+                "{} AND players LIKE ? ORDER BY pickup_id DESC LIMIT 1 OFFSET ?".format(
+                    select_statement
                 )
             )
+            c.execute(query, (channel_id, f"%{text}%", offset))
             result = c.fetchone()
     return result
 
