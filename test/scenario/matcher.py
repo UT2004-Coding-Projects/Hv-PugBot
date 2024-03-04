@@ -33,12 +33,19 @@ def compile_simple_expression(expr: str) -> re.Pattern:
     "8"
     """
     pattern = StringIO()
-    capture_pattern = re.compile(r"{\s*(?P<name>[a-zA-Z0-9_][a-zA-Z0-9_-]*)\s*}")
+    capture_pattern = re.compile(
+        r"{\s*(?P<name>[a-zA-Z0-9_][a-zA-Z0-9_-]*)\s*(:(?P<expr>[^}]+))?}"
+    )
 
     pos = 0
     for match in capture_pattern.finditer(expr):
         name = match["name"]
-        capture_group = f"(?P<{name}>.*?)"
+
+        pattern_expr = match["expr"]
+        if pattern_expr is None:
+            pattern_expr = ".*?"
+
+        capture_group = f"(?P<{name}>{pattern_expr})"
 
         pattern.write(re.escape(expr[pos : match.start()]))
         pattern.write(capture_group)
@@ -104,28 +111,27 @@ class PickStageReadyMatch(Match):
 
 class PickStageMatcher:
     _start_header = compile_simple_expression(
-        "__*({match_id})* **{game}** pickup has been started!__\r\n"
-        "<@{alpha_capt_id}> and <@{beta_capt_id}> please start picking teams.\r\n\r\n"
+        "**The {game} pickup has started**\r\n"
+        "<@{alpha_capt_id}> and <@{beta_capt_id}> please start picking teams\r\n\r\n"
     )
 
     _body = compile_simple_expression(
         "**Match {match_id}**\n"
-        ":{alpha_emote}: \u2772{alpha_team}\u2773\n"
-        ":{beta_emote}: \u2772{beta_team}\u2773\n\n"
+        ":{alpha_emote}: {alpha_team}\n"
+        ":{beta_emote}: {beta_team}\n\n"
         "__Unpicked__:\n"
-        "[{unpicked}]"
+        r"{unpicked:(\d+\. \S+(, )?)+\b}"
     )
 
     _start_footer = compile_simple_expression("\r\n<@{turn_capt_id}> picks first!")
     _turn_footer = compile_simple_expression("\n<@{turn_capt_id}>'s turn to pick!")
 
-    _picked = compile_simple_expression("`{name}`")
-    _unpicked = compile_simple_expression("{num}. `{name}`")
+    _unpicked = compile_simple_expression(r"{num:\d+}. {name:\S+}")
 
     _ready = compile_simple_expression(
         "**TEAMS READY - Match {match_id}**\r\n\r\n"
-        ":{alpha_emote}: \u2772{alpha_team}\u2773 \n"
-        ":{beta_emote}: \u2772{beta_team}\u2773 \r\n\r\n"
+        ":{alpha_emote}: {alpha_team}\n"
+        ":{beta_emote}: {beta_team}\r\n\r\n"
     )
 
     _ready_member = compile_simple_expression("<@{id}>")
@@ -174,15 +180,7 @@ class PickStageMatcher:
         return factory(fields, alpha_team, beta_team, unpicked)
 
     def _match_picked(self, text: str) -> Iterable[str]:
-        picked = []
-        for match in self._picked.finditer(text):
-            if not match:
-                break
-
-            name = match.group("name")
-            picked.append(name)
-
-        return picked
+        return text.split(", ")
 
     def _match_unpicked(self, text: str) -> Iterable[Tuple[int, str]]:
         unpicked = []

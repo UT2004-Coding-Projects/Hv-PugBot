@@ -5,10 +5,13 @@ import time
 import datetime
 import re
 import random
-from discord import errors
-from itertools import combinations
 from collections import OrderedDict
-from . import client, config, console, stats3, scheduler, utils
+from itertools import combinations
+from typing import List
+
+from discord import errors, Member
+
+from . import client, config, console, memberformatter, stats3, scheduler, utils
 
 max_expire_time = 6 * 60 * 60  # 6 hours
 max_bantime = 30 * 24 * 60 * 60 * 12 * 3  # 30 days * 12 * 3
@@ -143,7 +146,7 @@ class UnpickedPool:
 
 
 class Match:
-    def __init__(self, pickup, players):
+    def __init__(self, pickup, players: List[Member]):
         global matches_step
         # set match id
         stats3.last_match += 1
@@ -212,8 +215,8 @@ class Match:
                     self.captains = random.sample(self.players, 2)
 
             elif pick_captains == 1 and self.captains_role:
-                self.captains = []
-                candidates = list(
+                self.captains: List[discord.Member] = []
+                candidates: List[discord.Member] = list(
                     filter(
                         lambda x: self.captains_role in [role.id for role in x.roles],
                         self.players,
@@ -262,8 +265,8 @@ class Match:
             elif self.pick_teams == "manual":
                 self.pick_step = 0
                 unpicked = list(players)
-                self.alpha_team = []
-                self.beta_team = []
+                self.alpha_team: List[discord.Member] = []
+                self.beta_team: List[discord.Member] = []
                 if self.captains:
                     self.alpha_team.append(self.captains[0])
                     self.beta_team.append(self.captains[1])
@@ -335,18 +338,19 @@ class Match:
         alive_time = frametime - self.start_time
         if self.state == "waiting_ready":
             if alive_time > self.require_ready:
-                not_ready = list(
+                not_ready_list = list(
                     filter(lambda x: x.id not in self.players_ready, self.players)
                 )
-                self.players = list(
-                    filter(lambda x: x.id in self.players_ready, self.players)
-                )
-                not_ready = ["<@{0}>".format(i.id) for i in not_ready]
+                not_ready_str = memberformatter.format_list(not_ready_list, True)
+                was_were = "were" if len(not_ready_list) > 1 else "was"
+
                 client.notice(
                     self.channel,
-                    "{0} was not ready in time!\r\nReverting **{1}** pickup to gathering state...".format(
-                        ", ".join(not_ready), self.pickup.name
-                    ),
+                    f"{not_ready_str} {was_were} not ready in time!\r\nReverting **{game}** pickup to gathering state...",
+                )
+
+                self.players: List[discord.Member] = list(
+                    filter(lambda x: x.id in self.players_ready, self.players)
                 )
                 self.ready_fallback()
         elif alive_time > (
@@ -358,116 +362,51 @@ class Match:
             self.cancel_match()
 
     def _teams_to_str(self):
-        if self.ranked:
-            alpha_str = " ".join(
-                [
-                    "`{0}`<@{1}>".format(utils.rating_to_icon(self.ranks[i.id]), i.id)
-                    for i in self.alpha_team
-                ]
-            )
-            beta_str = " ".join(
-                [
-                    "`{0}`<@{1}>".format(utils.rating_to_icon(self.ranks[i.id]), i.id)
-                    for i in self.beta_team
-                ]
-            )
-            team_ratings = [
-                "〈__{0}__〉".format(sum([self.ranks[i.id] for i in team]) // len(team))
-                for team in (self.alpha_team, self.beta_team)
-            ]
-        else:
-            alpha_str = " ".join(["<@{0}>".format(i.id) for i in self.alpha_team])
-            beta_str = " ".join(["<@{0}>".format(i.id) for i in self.beta_team])
-            team_ratings = ["", ""]
+        alpha_str = f"{self.alpha_icon} {self._team_to_str(self.alpha_team, True)}"
+        beta_str = f"{self.beta_icon} {self._team_to_str(self.beta_team, True)}"
+        return f"{alpha_str}\n{beta_str}"
 
-        if len(self.players) == 2:
-            return "{0} / {1}".format(alpha_str, beta_str)
+    def _team_to_str(self, team, mention=False):
+        if len(team):
+            if self.ranked:
+                team_elo_average = sum(
+                    [self.ranks[player.id] for player in team]
+                ) // len(team)
+                team_player_data = list(
+                    map(
+                        lambda player: (
+                            player,
+                            [utils.rating_to_icon(self.ranks[player.id])],
+                        ),
+                        team,
+                    )
+                )
+                team_str = f"{memberformatter.format_list_tuples(team_player_data, mention)} [ELO: {team_elo_average}]"
+            else:
+                team_str = f"{memberformatter.format_list(team, mention)}"
         else:
-            return "{0} ❲{1}❳ {4}\n{2} ❲{3}❳ {5}".format(
-                self.alpha_icon, alpha_str, self.beta_icon, beta_str, *team_ratings
-            )
+            team_str = "❲{0}❳".format(self.team_names[0])
+
+        return team_str
 
     def _teams_picking_to_str(self):
-        match_id_str = "**Match {0}**".format(self.id)
-        if len(self.alpha_team):
-            if self.ranked:
-                alpha_str = "❲{1}❳ 〈__{0}__〉".format(
-                    sum([self.ranks[i.id] for i in self.alpha_team])
-                    // len(self.alpha_team),
-                    " + ".join(
-                        [
-                            "`{0}{1}`".format(
-                                utils.rating_to_icon(self.ranks[i.id]),
-                                (i.nick or i.name).replace("`", ""),
-                            )
-                            for i in self.alpha_team
-                        ]
-                    ),
-                )
-            else:
-                alpha_str = "❲{0}❳".format(
-                    " + ".join(
-                        [
-                            "`{0}`".format((i.nick or i.name).replace("`", ""))
-                            for i in self.alpha_team
-                        ]
-                    )
-                )
-        else:
-            alpha_str = "❲{0}❳".format(self.team_names[0])
-        if len(self.beta_team):
-            if self.ranked:
-                beta_str = "❲{1}❳ 〈__{0}__〉".format(
-                    sum([self.ranks[i.id] for i in self.beta_team])
-                    // len(self.beta_team),
-                    " + ".join(
-                        [
-                            "`{0}{1}`".format(
-                                utils.rating_to_icon(self.ranks[i.id]),
-                                (i.nick or i.name).replace("`", ""),
-                            )
-                            for i in self.beta_team
-                        ]
-                    ),
-                )
-            else:
-                beta_str = "❲{0}❳".format(
-                    " + ".join(
-                        [
-                            "`{0}`".format((i.nick or i.name).replace("`", ""))
-                            for i in self.beta_team
-                        ]
-                    )
-                )
-        else:
-            beta_str = "❲{0}❳".format(self.team_names[1])
-        if self.ranked:
-            player_strs = []
-            for position, player in sorted(self.unpicked_pool.all.items()):
-                player_strs.apppend(
-                    "{0}. `{1}`".format(
-                        utils.rating_to_icon(self.ranks[player.id]),
-                        (player.nick or player.name).replace("`", ""),
-                    )
-                )
-            unpicked_str = "[" + ", ".join(player_strs) + "]"
-        else:
-            player_strs = []
-            for position, player in sorted(self.unpicked_pool.all.items()):
-                player_strs.append(
-                    "{0}. `{1}`".format(
-                        position, (player.nick or player.name).replace("`", "")
-                    )
-                )
-            unpicked_str = "[" + ", ".join(player_strs) + "]"
-        return "{0}\n{1} {2}\n{4} {3}\n\n__Unpicked__:\n{5}".format(
-            match_id_str,
-            self.alpha_icon,
-            alpha_str,
-            beta_str,
-            self.beta_icon,
-            unpicked_str,
-        )
+        match_id_str = f"**Match {self.id}**"
+        alpha_str = self._team_to_str(self.alpha_team)
+        beta_str = self._team_to_str(self.beta_team)
+
+        # TODO: for tags (`.nomic`, `.tag im retarded`, etc) this will have to change
+        # for now though, assume tags is always the ELO rank thingy
+        unpicked_player_data = OrderedDict()
+        for key, player in self.unpicked_pool.all.items():
+            inner = {
+                "player": player,
+                "tags": [utils.rating_to_icon(self.ranks[player.id])]
+                if self.ranked
+                else [],
+            }
+            unpicked_player_data[key] = inner
+        unpicked_str = memberformatter.format_unpicked(unpicked_player_data)
+        return f"{match_id_str}\n{self.alpha_icon} {alpha_str}\n{self.beta_icon} {beta_str}\n\n__Unpicked__:\n{unpicked_str}"
 
     def _startmsg_to_str(self):
         ipstr = self.pickup.channel.get_value("startmsg", self.pickup)
@@ -477,22 +416,10 @@ class Match:
         return ipstr
 
     def _players_to_str(self, players):
-        if len(players) == 1:
-            return "<@{0}>".format(players[0].id)
-
-        players = list(players)
-        last_player = players.pop(len(players) - 1)
-        players_highlight = "<@" + ">, <@".join([str(i.id) for i in players]) + ">"
-        players_highlight += " and <@{0}>".format(last_player.id)
-        return players_highlight
+        return memberformatter.format_list(players, True)
 
     def print_startmsg_instant(self):
-        if self.ranked:
-            startmsg = "__*({0})* **{1}** pickup has been started!__ ".format(
-                str(self.id), self.pickup.name
-            )
-        else:
-            startmsg = "__**{0}** pickup has been started!__ ".format(self.pickup.name)
+        startmsg = f"**The {self.pickup.name} pickup has started**"
 
         if self.beta_team and self.alpha_team:
             if len(self.players) > 2:
@@ -503,8 +430,6 @@ class Match:
             startmsg += "\r\n" + self._players_to_str(self.players) + " "
             if len(self.players) > 4:
                 startmsg += "\r\n"
-
-        #        startmsg += self._startmsg_to_str()
 
         if self.captains and len(self.players) > 2:
             startmsg += "\r\nSuggested captains: <@{0}> and <@{1}>.".format(
@@ -517,11 +442,9 @@ class Match:
         client.notice(self.channel, self._startmsg_to_str())
 
     def print_startmsg_teams_picking_start(self):
-        startmsg = "__*({0})* **{1}** pickup has been started!__\r\n".format(
-            str(self.id), self.pickup.name
-        )
+        startmsg = f"**The {self.pickup.name} pickup has started**\r\n"
         if self.captains:
-            startmsg += "<@{0}> and <@{1}> please start picking teams.\r\n\r\n".format(
+            startmsg += "<@{0}> and <@{1}> please start picking teams\r\n\r\n".format(
                 self.captains[0].id, self.captains[1].id
             )
         else:
@@ -705,12 +628,12 @@ class Match:
     def ready_refresh(self):
         not_ready = list(filter(lambda i: i.id not in self.players_ready, self.players))
         if len(not_ready):
-            content = (
-                "__*({0})* **{1}** pickup is now on waiting ready state!__\r\n".format(
-                    self.id, self.pickup.name
-                )
+            content = "*({0})* The **{1}** pickup has filled\r\n".format(
+                self.id, self.pickup.name
             )
-            content += "Waiting on: {0}.\r\n".format(self._players_to_str(not_ready))
+            content += "Waiting on: {0}.\r\n".format(
+                memberformatter.format_list(not_ready, True)
+            )
             content += "Please react with :ballot_box_with_check: to **check-in** or :no_entry: to **abort**!"
             client.edit_message(self.ready_message, content)
         else:
@@ -757,7 +680,7 @@ class ReadyMark:
 
 class Pickup:
     def __init__(self, channel, cfg):
-        self.players = []  # [discord member objects]
+        self.players: List[discord.Member] = []
         self.users_last_ready = {}
         self.name = cfg["pickup_name"]
         self.lastmap = None
@@ -1302,27 +1225,21 @@ class Channel:
             client.reply(self.channel, member, "You have no right for this!")
 
     def who(self, member, args):
-        templist = []
+        who_output = []
         for pickup in (
             pickup
             for pickup in self.pickups
             if pickup.players != [] and (pickup.name.lower() in args or args == [])
         ):
-            templist.append(
-                "[**{0}** ({1}/{2})] {3}".format(
-                    pickup.name,
-                    len(pickup.players),
-                    pickup.cfg["maxplayers"],
-                    "/".join(
-                        [
-                            "`" + (i.nick or i.name).replace("`", "") + "`"
-                            for i in pickup.players
-                        ]
-                    ),
-                )
+            pickup_details = "[**{0}** ({1}/{2})]".format(
+                pickup.name,
+                len(pickup.players),
+                pickup.cfg["maxplayers"],
             )
-        if templist != []:
-            client.notice(self.channel, " ".join(templist))
+            pickup_players = memberformatter.format_list(pickup.players, False)
+            who_output.append(f"{pickup_details} {pickup_players}")
+        if who_output != []:
+            client.notice(self.channel, "\n".join(who_output))
         else:
             if args:
                 client.notice(
@@ -1361,16 +1278,18 @@ class Channel:
         else:
             l = self.lastgame_cache
         if l:
-            n = l[0]
+            pickup_num = l[0]
             ago = datetime.timedelta(seconds=int(time.time() - int(l[1])))
-            gt = l[2]
+            gametype = l[2]
+
+            ## Can't use memberformatter here. players, alpha_players, beta_players are strings rather than arrays
             if l[4] and l[5]:
-                players = "[{0}] vs [{1}]".format(l[4], l[5])
+                players = "{0}\n{1}".format(l[4], l[5])
             else:
-                players = ", ".join(l[3].strip().split(" "))
+                players = l[3]
             client.notice(
                 self.channel,
-                "Pickup #{0}, {1} ago [{2}]: {3}".format(n, ago, gt, players),
+                f"**Match {pickup_num} [{gametype}]:** {ago} ago\n{players}",
             )
         else:
             client.notice(self.channel, "No pickups found.")
