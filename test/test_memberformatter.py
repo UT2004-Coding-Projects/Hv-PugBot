@@ -15,8 +15,8 @@ def mocked_members() -> List[discord.Member]:
     for i in range(4):
         member = MagicMock(spec=discord.Member)
         member.id = i
-        member.name = f"Member_name_{i}"
-        member.nick = f"Member_nick_{i}"
+        member.name = f"Member-name-{i}"
+        member.nick = f"Member-nick-{i}"
         member.mention = f"<@{i}>"
         members.append(member)
     return members
@@ -37,9 +37,9 @@ def members_with_dumb_nicknames(
     mocked_members: List[discord.Member],
 ) -> List[Tuple[discord.Member, List[str]]]:
     dumb_nicknames = []
-    for index, member in enumerate(mocked_members):
-        member.nick = f"d`c{index}"
-        dumb_nicknames.append((member, None))
+    dumb_nickname = mocked_members[0]
+    dumb_nickname.nick = f"d`_#*`_#*c0"
+    dumb_nicknames.append((dumb_nickname, None))
     return dumb_nicknames
 
 
@@ -58,13 +58,13 @@ def members_with_decorations(mocked_members) -> List[Tuple[discord.Member, List[
 
 
 def test_format_list_uses_nicknames(members_with_decorations):
-    expected = "Member_nick_0 [[A+], :nomic:], Member_nick_1 [[A+], :nomic:], Member_nick_2 [[A+], :nomic:], Member_nick_3 [[A+], :nomic:]"
+    expected = "Member-nick-0 [[A+], :nomic:], Member-nick-1 [[A+], :nomic:], Member-nick-2 [[A+], :nomic:], Member-nick-3 [[A+], :nomic:]"
     actual = memberformatter.format_list_tuples(members_with_decorations, False)
     assert expected == actual
 
 
 def test_format_list_escapes_backticks(members_with_dumb_nicknames):
-    expected = "d\\`c0, d\\`c1, d\\`c2, d\\`c3"
+    expected = "d\\`\\_\\#\\*\\`\\_\\#\\*c0"
     actual = memberformatter.format_list_tuples(members_with_dumb_nicknames, False)
     assert expected == actual
 
