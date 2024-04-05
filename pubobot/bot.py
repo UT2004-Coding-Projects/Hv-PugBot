@@ -483,15 +483,7 @@ class Match:
         if self.state == "none":
             if self.require_ready:
                 self.state = "waiting_ready"
-                self.pickup.channel.waiting_messages[
-                    str(self.id)
-                ] = self.spawn_ready_message
-                client.notice(
-                    self.channel,
-                    "{0}spawn_message {1}".format(
-                        self.pickup.channel.cfg["prefix"], self.id
-                    ),
-                )
+                self.ready_refresh(True)
             elif self.pick_teams == "manual":
                 self.print_startmsg_teams_picking_start()
                 self.state = "teams_picking"
@@ -569,12 +561,11 @@ class Match:
         self.winner = "draw"
         self.next_state()
 
-    def spawn_ready_message(self, message):
+    def set_ready_message(self, message):
         self.ready_message = message
         waiting_reactions[message.id] = self.process_ready_reaction
         for emoji in [ready_emoji, "🔸", notready_emoji]:
             client.add_reaction(message, emoji)
-        self.ready_refresh()
 
     def process_ready_reaction(self, action, reaction, user):
         if user not in self.players or self.state != "waiting_ready":
@@ -625,7 +616,10 @@ class Match:
         )
         self.pickup_fallback()
 
-    def ready_refresh(self):
+    def ready_refresh(self, first=False):
+        if first:
+            self.ready_message = None
+
         not_ready = list(filter(lambda i: i.id not in self.players_ready, self.players))
         if len(not_ready):
             content = "*({0})* The **{1}** pickup has filled\r\n".format(
@@ -635,10 +629,15 @@ class Match:
                 memberformatter.format_list(not_ready, True)
             )
             content += "Please react with :ballot_box_with_check: to **check-in** or :no_entry: to **abort**!"
-            client.edit_message(self.ready_message, content)
+
+            if not self.ready_message:
+                client.notice(self.channel, content, callback=self.set_ready_message)
+            else:
+                client.edit_message(self.ready_message, content)
         else:
-            waiting_reactions.pop(self.ready_message.id)
-            client.delete_message(self.ready_message)
+            if self.ready_message:
+                waiting_reactions.pop(self.ready_message.id)
+                client.delete_message(self.ready_message)
             self.next_state()
 
     def pickup_fallback(self):
@@ -734,7 +733,6 @@ class Channel:
         self.lastgame_pickup = None
         self.oldtopic = "[**no pickups**]"
         self.to_remove = []  # players
-        self.waiting_messages = dict()  # {msg_code: function}
 
     def init_pickups(self):
         pickups = stats3.get_pickups(self.id)
@@ -1012,9 +1010,6 @@ class Channel:
 
             elif lower[0] == "help":
                 self.help_answer(member, lower[1:])
-
-            elif lower[0] == "spawn_message" and member == self.guild.me:
-                self.waiting_messages.pop(msgtup[1])(msg)
 
             elif self.cfg["ranked"]:
                 if lower[0] in ["leaderboard", "lb"]:
