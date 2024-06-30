@@ -265,42 +265,44 @@ class Match():
         else:
             return "{0} ❲{1}❳ {4}\r\n          :fire: **VERSUS** :fire:\r\n{2} ❲{3}❳ {5}".format(self.alpha_icon, alpha_str, self.beta_icon, beta_str, *team_ratings)
 
+
+    def _format_team_str(self, team, team_name, is_ranked):
+        if not team:
+            return f"❲{team_name}❳"
+
+        if is_ranked:
+            total_rank = sum(self.ranks[player.id] for player in team)
+            avg_rank = total_rank // len(team)
+            players_str = " + ".join(f"`{utils.rating_to_icon(self.ranks[player.id])}{(player.nick or player.name).replace('`', '')}`" for player in team)
+            return f"❲{players_str}❳ 〈__{avg_rank}__〉"
+        else:
+            players_str = " + ".join(f"`{(player.nick or player.name).replace('`', '')}`" for player in team)
+            return f"❲{players_str}❳"
+
+    def _format_unpicked_str(self, is_ranked):
+        player_strs = []
+        for position, player in sorted(self.unpicked_pool.all.items()):
+            if is_ranked:
+                player_strs.append(f"{utils.rating_to_icon(self.ranks[player.id])}. `{(player.nick or player.name).replace('`', '')}`")
+            else:
+                pstat = player_stats.get_player(player.id)
+                if pstat:
+                    pstat_str = f"({pstat.stat_value:.2f})"
+                else:
+                    pstat_str = f"(N/A)"
+                player_strs.append(f"{position}. `{(player.nick or player.name).replace('`', '')}` {pstat_str}")
+        return f"[{', '.join(player_strs)}]"
+
     def _teams_picking_to_str(self):
-        match_id_str = "**Match {0}**".format(self.id)
-        if len(self.alpha_team):
-            if self.ranked:
-                alpha_str = "❲{1}❳ 〈__{0}__〉".format(sum([self.ranks[i.id] for i in self.alpha_team])//len(self.alpha_team), " + ".join(
-                    ["`{0}{1}`".format(utils.rating_to_icon(self.ranks[i.id]), (i.nick or i.name).replace("`","")) for i in self.alpha_team]))
-            else:
-                alpha_str = "❲{0}❳".format(" + ".join(["`{0}`".format((i.nick or i.name).replace("`","")) for i in self.alpha_team]))
-        else:
-            alpha_str = "❲{0}❳".format(self.team_names[0])
-        if len(self.beta_team):
-            if self.ranked:
-                beta_str = "❲{1}❳ 〈__{0}__〉".format(sum([self.ranks[i.id] for i in self.beta_team])//len(self.beta_team), " + ".join(
-                    ["`{0}{1}`".format(utils.rating_to_icon(self.ranks[i.id]), (i.nick or i.name).replace("`","")) for i in self.beta_team]))
-            else:
-                beta_str = "❲{0}❳".format(" + ".join(["`{0}`".format((i.nick or i.name).replace("`","")) for i in self.beta_team]))
-        else:
-            beta_str = "❲{0}❳".format(self.team_names[1])
-        if self.ranked:
-            player_strs = []
-            for position, player in sorted(self.unpicked_pool.all.items()):
-                player_strs.apppend(
-                    "{0}. `{1}`".format(
-                        utils.rating_to_icon(self.ranks[player.id]),
-                        (player.nick or player.name).replace("`", "")
-                    )
-                )
-            unpicked_str = "[" + ", ".join(player_strs) + "]"
-        else:
-            player_strs = []
-            for position, player in sorted(self.unpicked_pool.all.items()):
-                player_strs.append(
-                    "{0}. `{1}`".format(position, (player.nick or player.name).replace("`",""))
-                )
-            unpicked_str = "[" + ", ".join(player_strs) + "]"
-        return "{0}\n{1} {2}\n          :fire:**VERSUS**:fire:\n{4} {3}\n\n__Unpicked__:\n{5}".format(match_id_str, self.alpha_icon, alpha_str, beta_str, self.beta_icon, unpicked_str)
+        match_id_str = f"**Match {self.id}**"
+        alpha_str = self._format_team_str(self.alpha_team, self.team_names[0], self.ranked)
+        beta_str = self._format_team_str(self.beta_team, self.team_names[1], self.ranked)
+        unpicked_str = self._format_unpicked_str(self.ranked)
+
+        return (f"{match_id_str}\n{self.alpha_icon} {alpha_str}\n"
+                f"          :fire:**VERSUS**:fire:\n"
+                f"{self.beta_icon} {beta_str}\n\n"
+                f"__Unpicked__:\n{unpicked_str}")
 
     def _startmsg_to_str(self):
         ipstr = self.pickup.channel.get_value("startmsg", self.pickup)
@@ -365,12 +367,25 @@ class Match():
         if self.pick_order:
             if self.pick_order[0] == 'a':
                 if self.captains:
-                    first = "<@{0}> {1}".format(self.captains[0].id, player_stats.get_player(str(self.captains[0].id)) or 'N/A')
+                    stat = player_stats.get_player(str(self.captains[0].id))
+                    if stat:
+                        first_stat = f"{stat.stat_value:.2f}"
+                    else:
+                        first_stat = "N/A"
+                    
+                    first = "<@{0}> {1}".format(self.captains[0].id, first_stat)
                 else:
                     first = '**'+self.team_names[0]+'**'
             else:
                 if self.captains:
-                    first = "<@{0}>".format(self.captains[1].id, player_stats.get_player(str(self.captains[0].id)) or 'N/A')
+                    stat = player_stats.get_player(str(self.captains[1].id))
+                    if stat:
+                        first_stat = f"{stat.stat_value:.2f}"
+                    else:
+                        first_stat = "N/A"
+                    
+
+                    first = "<@{0}>".format(self.captains[1].id, first_stat)
                 else:
                     first = '**'+self.team_names[1]+'**'
             startmsg += "\r\n{0} picks first!".format(first)
@@ -1132,14 +1147,20 @@ class Channel():
                         if match.pick_order[match.pick_step] == 'a':
                             if len(match.alpha_team):
                                 who = "<@{0}>".format(match.alpha_team[0].id)
+                                who_stat = player_stats.get_player(match.alpha_team[0].id)
+                                who_stat = f"({who_stat.stat_value:.2f})" if who_stat else "(N/A)"
                             else:
                                 who = match.team_names[0]
                         else:
                             if len(match.beta_team):
                                 who = "<@{0}>".format(match.beta_team[0].id)
+                                who_stat = player_stats.get_player(match.beta_team[0].id)
+                                who_stat = f"({who_stat.stat_value:.2f})" if who_stat else "(N/A)"
                             else:
                                 who = match.team_names[1]
-                        msg += "\n{0}'s turn to pick!".format(who)
+
+                        who_stat = player_stats.get_player()
+                        msg += "\n{0}'s {1} turn to pick!".format(who, who_stat)
                     client.notice(self.channel, msg)
             else:
                 client.reply(self.channel, member, "Specified player are not in unpicked players list.")
