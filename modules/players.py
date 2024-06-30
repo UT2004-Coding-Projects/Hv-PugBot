@@ -69,8 +69,8 @@ class KokueiUFCStatsRetriever(AbstractPlayerStatsRetriever):
 
         return self._player_stats
 
-    def get_player(self, discord_id: id):
-        return self.player_stats.get(discord_id)
+    def get_player(self, discord_id: str):
+        return self.player_stats.get(str(discord_id))
 
     @lru_cache()
     def _load_player_stats(self, ttl_hash=None):

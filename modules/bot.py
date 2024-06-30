@@ -310,16 +310,23 @@ class Match():
         return ipstr
 
     def _players_to_str(self, players):
-        if len(players) == 1: return('<@{0}> {1}'.format(players[0].id), player_stats.get_player(players[0].id) or 'N/A')
+        player_strs = []
+        for player in players:
+            pstat = player_stats.get_player(player.id)
+            if pstat:
+                stat = f"{pstat.stat_value:.2f}"
+            else:
+                stat = "N/A"
 
-        players = list(players)
-        last_player = players.pop(len(players)-1)
-        players_highlights = [
-            f"<@{player.id}> ({player_stats.get_player(str(player.id)) or 'N/A'})" for player in players
-        ]
-        players_highlight = ", ".join(players_highlights)
-        players_highlight += " and <@{0}> ({1})".format(last_player.id, player_stats.get_player(str(last_player.id)) or 'N/A')
-        return players_highlight
+            player_strs.append(
+                f"<@{player.id}> ({stat})"
+            )
+
+        if len(players) == 1:
+            return ", ".join(player_strs)
+
+        else:
+            return ", ".join(player_strs[:len(player_strs) - 1]) + f" and {player_strs[-1]}"
 
     def print_startmsg_instant(self):
         if self.ranked:
