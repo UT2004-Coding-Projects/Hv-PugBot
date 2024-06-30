@@ -5,7 +5,8 @@ import time, datetime, re, traceback, random
 from discord import errors
 from itertools import combinations
 from collections import OrderedDict
-from modules import client, config, console, stats3, scheduler, utils
+from modules import client, config, console, stats3, scheduler, utils, players
+
 
 max_expire_time = 6*60*60 #6 hours
 max_bantime = 30*24*60*60*12*3 #30 days * 12 * 3
@@ -16,13 +17,14 @@ team_emojis = [":fox:", ":wolf:", ":dog:", ":bear:", ":panda_face:", ":tiger:", 
 
 
 def init():
-    global channels, channels_list, active_pickups, active_matches, allowoffline, waiting_reactions
+    global channels, channels_list, active_pickups, active_matches, allowoffline, waiting_reactions, player_stats
     channels = []
     channels_list = []
     active_pickups = []
     active_matches = []
     allowoffline = [] #users with !allowoffline
     waiting_reactions = dict() #{message_id: function}
+    player_stats = players.KokueiUFCStatsRetriever()
 
 
 class UnpickedPool():
@@ -308,12 +310,15 @@ class Match():
         return ipstr
 
     def _players_to_str(self, players):
-        if len(players) == 1: return('<@{0}>'.format(players[0].id))
+        if len(players) == 1: return('<@{0}> {1}'.format(players[0].id), player_stats.get_player(players[0].id) or 'N/A')
 
         players = list(players)
         last_player = players.pop(len(players)-1)
-        players_highlight = '<@'+'>, <@'.join([str(i.id) for i in players])+'>'
-        players_highlight += " and <@{0}>".format(last_player.id)
+        players_highlights = [
+            f"<@{player.id}> ({player_stats.get_player(str(player.id)) or 'N/A'})" for player in players
+        ]
+        players_highlight = ", ".join(players_highlights)
+        players_highlight += " and <@{0}> ({1})".format(last_player.id, player_stats.get_player(str(last_player.id)) or 'N/A')
         return players_highlight
 
     def print_startmsg_instant(self):
@@ -353,12 +358,12 @@ class Match():
         if self.pick_order:
             if self.pick_order[0] == 'a':
                 if self.captains:
-                    first = "<@{0}>".format(self.captains[0].id)
+                    first = "<@{0}> {1}".format(self.captains[0].id, player_stats.get_player(str(self.captains[0].id)) or 'N/A')
                 else:
                     first = '**'+self.team_names[0]+'**'
             else:
                 if self.captains:
-                    first = "<@{0}>".format(self.captains[1].id)
+                    first = "<@{0}>".format(self.captains[1].id, player_stats.get_player(str(self.captains[0].id)) or 'N/A')
                 else:
                     first = '**'+self.team_names[1]+'**'
             startmsg += "\r\n{0} picks first!".format(first)
