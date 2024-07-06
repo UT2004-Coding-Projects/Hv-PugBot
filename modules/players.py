@@ -42,16 +42,9 @@ def StatsDBConnection():
         passwd=os.getenv("PLAYER_STATS_DB_PASSWORD"),
         db="utstatsdb",
     )
-
-    try:
-        cursor = connection.connect()
-        yield cursor
-        connection.commit()
-    except Exception as e:
-        connection.rollback()
-    finally:
-        cursor.close()
-        connection.close()
+    cursor = connection.cursor()
+    yield cursor
+    connection.commit()
 
 
 class KokueiUFCStatsRetriever(AbstractPlayerStatsRetriever):
