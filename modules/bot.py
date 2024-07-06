@@ -272,7 +272,18 @@ class Match():
                 alpha_str = "❲{1}❳ 〈__{0}__〉".format(sum([self.ranks[i.id] for i in self.alpha_team])//len(self.alpha_team), " + ".join(
                     ["`{0}{1}`".format(utils.rating_to_icon(self.ranks[i.id]), (i.nick or i.name).replace("`","")) for i in self.alpha_team]))
             else:
-                alpha_str = "❲{0}❳".format(" + ".join(["`{0}`".format((i.nick or i.name).replace("`","")) for i in self.alpha_team]))
+                player_str = []
+                for player in self.alpha_team:
+                    pstat = player_stats.get_player(player.id)
+                    if pstat:
+                        pstat_str = f"({pstat.stat_value:.2f})"
+                    else:
+                        pstat_str = f"(N/A)"
+
+                    player_str.append(
+                        "`{0}` {1}".format((player.nick or player.name).replace("`", ""), pstat_str)
+                    )
+                alpha_str = "({0})".format(" + ".join(player_str))
         else:
             alpha_str = "❲{0}❳".format(self.team_names[0])
         if len(self.beta_team):
@@ -280,7 +291,19 @@ class Match():
                 beta_str = "❲{1}❳ 〈__{0}__〉".format(sum([self.ranks[i.id] for i in self.beta_team])//len(self.beta_team), " + ".join(
                     ["`{0}{1}`".format(utils.rating_to_icon(self.ranks[i.id]), (i.nick or i.name).replace("`","")) for i in self.beta_team]))
             else:
-                beta_str = "❲{0}❳".format(" + ".join(["`{0}`".format((i.nick or i.name).replace("`","")) for i in self.beta_team]))
+                player_str = []
+                for player in self.beta_team:
+                    pstat = player_stats.get_player(player.id)
+                    if pstat:
+                        pstat_str = f"({pstat.stat_value:.2f})"
+                    else:
+                        pstat_str = f"(N/A)"
+
+                    player_str.append(
+                        "`{0}` {1}".format((player.nick or player.name).replace("`", ""), pstat_str)
+                    )
+
+                beta_str = "({0})".format(" + ".join(player_str))
         else:
             beta_str = "❲{0}❳".format(self.team_names[1])
         if self.ranked:
@@ -296,8 +319,14 @@ class Match():
         else:
             player_strs = []
             for position, player in sorted(self.unpicked_pool.all.items()):
+                pstat = player_stats.get_player(player.id)
+                if pstat:
+                    pstat_str = f"({pstat.stat_value:.2f})"
+                else:
+                    pstat_str = f"(N/A)"
+
                 player_strs.append(
-                    "{0}. `{1}`".format(position, (player.nick or player.name).replace("`",""))
+                    "{0}. `{1}` {2}".format(position, (player.nick or player.name).replace("`",""), pstat_str)
                 )
             unpicked_str = "[" + ", ".join(player_strs) + "]"
         return "{0}\n{1} {2}\n          :fire:**VERSUS**:fire:\n{4} {3}\n\n__Unpicked__:\n{5}".format(match_id_str, self.alpha_icon, alpha_str, beta_str, self.beta_icon, unpicked_str)
@@ -1075,6 +1104,7 @@ class Channel():
                 return i
         return None
 
+
     def pick_player(self, member, args):
         match = self._match_by_player(member)
         if not match:
@@ -1132,14 +1162,20 @@ class Channel():
                         if match.pick_order[match.pick_step] == 'a':
                             if len(match.alpha_team):
                                 who = "<@{0}>".format(match.alpha_team[0].id)
+                                who_stat = player_stats.get_player(match.alpha_team[0].id)
+                                who_stat = f"({who_stat.stat_value:.2f})" if who_stat else "(N/A)"
                             else:
                                 who = match.team_names[0]
                         else:
                             if len(match.beta_team):
                                 who = "<@{0}>".format(match.beta_team[0].id)
+                                who_stat = player_stats.get_player(match.beta_team[0].id)
+                                who_stat = f"({who_stat.stat_value:.2f})" if who_stat else "(N/A)"
                             else:
                                 who = match.team_names[1]
-                        msg += "\n{0}'s turn to pick!".format(who)
+
+                        who_stat = player_stats.get_player()
+                        msg += "\n{0}'s {1} turn to pick!".format(who, who_stat)
                     client.notice(self.channel, msg)
             else:
                 client.reply(self.channel, member, "Specified player are not in unpicked players list.")
