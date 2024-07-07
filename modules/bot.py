@@ -394,12 +394,23 @@ class Match():
         if self.pick_order:
             if self.pick_order[0] == 'a':
                 if self.captains:
-                    first = "<@{0}> {1}".format(self.captains[0].id, player_stats.get_player(str(self.captains[0].id)) or 'N/A')
+                    pstat = player_stats.get_player(self.captains[0].id)
+                    if pstat:
+                        pstat_str = f"({pstat.stat_value:.2f})"
+                    else:
+                        pstat_str = "(N/A)"
+
+                    first = "<@{0}> {1}".format(self.captains[0].id, pstat_str)
                 else:
                     first = '**'+self.team_names[0]+'**'
             else:
                 if self.captains:
-                    first = "<@{0}>".format(self.captains[1].id, player_stats.get_player(str(self.captains[0].id)) or 'N/A')
+                    pstat = player_stats.get_player(self.captains[1].id)
+                    if pstat:
+                        pstat_str = f"({pstat.stat_value:.2f})"
+                    else:
+                        pstat_str = "(N/A)"
+                    first = "<@{0}> {1}".format(self.captains[1].id, pstat_str)
                 else:
                     first = '**'+self.team_names[1]+'**'
             startmsg += "\r\n{0} picks first!".format(first)
