@@ -754,6 +754,9 @@ class Channel():
             elif lower[0]=="cancel":
                 self.cancel_match(member, lower[1:2], access_level)
 
+            elif lower[0]=="register":
+                await self.register_player(member, msgtup[1:msglen], access_level)
+
             elif lower[0] in ["reportwin", "rw"]:
                 self.report_match(member, args=lower[1:3], access_level=access_level)
 
@@ -2089,6 +2092,43 @@ class Channel():
                     client.reply(self.channel, member, "Target must be a Member highlight.")
             else:
                 client.reply(self.channel, member, "This command needs more arguments.")
+        else:
+            client.reply(self.channel, member, "You have no right for this!")
+
+    async def register_player(self, member, args, access_level):
+        # .register_player @person 12234343434
+
+        def is_valid_2k4_id(ut_2k4_id):
+            formatted_string = f"{s[:8]}-{s[8:16]}-{s[16:24]}-{s[24:32]}"
+            pattern = re.compile(r'^[A-F0-9]{8}-[A-F0-9]{8}-[A-F0-9]{8}-[A-F0-9]{8}$')
+            return bool(pattern.match(formatted_string))
+
+        def normalize_2k4_id(ut_2k4_id):
+            return ut_2k4_id.replace('-', '').lower()
+
+        if access_level:
+            targetid = args.pop(0)
+            highlight = re.match(r"<@!?(\d+)>", targetid)
+
+            if highlight:
+                target = await self.guild.fetch_member(int(highlight.group(1)))
+                member_id = target.id
+                nick = target.nick
+                ut_2k4_id = args[-1]
+
+                ut_2k4_id = normalize_2k4_id(ut_2k4_id)
+                if is_valid_2k4_id(ut_2k4_id):
+                    player = players.Player(
+                        name=nick,
+                        discord_id=member_id,
+                        ut_2k4_id=ut_2k4_id
+                    )
+
+                    player_stats.add_player(player)
+                else:
+                    client.reply(self.channel, member, "Targets 2k4 GUID is not valid. Proper command is `.register_player @mention <their-2k4-guid>`")
+            else:
+                client.reply(self.channel, member, "You must @mention a valid discord member. Proper command is `.register_player @mention <their-2k4-guid>`")
         else:
             client.reply(self.channel, member, "You have no right for this!")
 
