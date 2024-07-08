@@ -98,7 +98,7 @@ class KokueiUFCStatsRetriever(AbstractPlayerStatsRetriever):
                         AND m.gm_numplayers >= 8
                         AND m.gm_tscore0 + m.gm_tscore1 >= 10
                             AND IF(gp.gp_team = 0, gp.gp_tscore0, gp.gp_tscore1) > 0
-                        AND m.gm_start BETWEEN FROM_UNIXTIME(1714521600) AND FROM_UNIXTIME(1718849956)
+                        AND datediff(curdate(), m.gm_start) <= 60
                     )
 
                     SELECT
