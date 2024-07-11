@@ -102,7 +102,7 @@ class KokueiUFCStatsRetriever(AbstractPlayerStatsRetriever):
                     )
 
                     SELECT
-                    player_match_history.plr_name as name,
+                    ut_players.name,
                     ut_players.DISCORD_ID,
                     player_match_history.plr_key as player_guid,
                     SUM(Score) / SUM(Rounds) as PPR,
