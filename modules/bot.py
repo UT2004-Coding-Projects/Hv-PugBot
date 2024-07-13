@@ -1188,7 +1188,6 @@ class Channel():
                             else:
                                 who = match.team_names[1]
 
-                        who_stat = player_stats.get_player()
                         msg += "\n{0}'s {1} turn to pick!".format(who, who_stat)
                     client.notice(self.channel, msg)
             else:
