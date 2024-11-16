@@ -1,8 +1,10 @@
 from typing import List, Tuple
 from collections import OrderedDict
-
+from .player_stats import KokueiUFCStatsRetriever
 import discord
 
+
+player_stats = KokueiUFCStatsRetriever()
 
 ## No tags
 def format_list(players: List[discord.Member], mention=False) -> str:
@@ -32,10 +34,13 @@ def format_unpicked(unpicked: OrderedDict):
 def get_player_string(player: Tuple[discord.Member, List[str]], mention) -> str:
     mention_or_name = f"<@{player[0].id}>" if mention else get_player_name(player[0])
     tags = get_tags(player[1])
+    ppr = player_stats.get_player(player[0].id)
+    p_string = f"{mention_or_name}"
     if tags is not None:
-        return f"{mention_or_name} {tags}"
-    else:
-        return f"{mention_or_name}"
+        p_string = p_string + f" {tags}"
+    if ppr is not None:
+        p_string = p_string + f" ({ppr})"
+    return p_string
 
 
 def get_player_name(player: discord.Member) -> str:
