@@ -97,7 +97,6 @@ class KokueiUFCStatsRetriever(AbstractPlayerStatsRetriever):
                     SELECT
                         p.pnum,
                         p.plr_key,
-                        p.plr_name,
                         IF(gp.gp_team = 0, gp.gp_tscore0, gp.gp_tscore1) as Score,
                         m.gm_tscore0 + m.gm_tscore1 AS Rounds,
                         m.gm_numplayers as PlayerCount,
@@ -110,13 +109,12 @@ class KokueiUFCStatsRetriever(AbstractPlayerStatsRetriever):
                     WHERE
                         t.tp_desc = 'TeamArenaMaster'
                         AND m.gm_numplayers >= 8
-                        AND m.gm_tscore0 + m.gm_tscore1 >= 10
-                            AND IF(gp.gp_team = 0, gp.gp_tscore0, gp.gp_tscore1) > 0
-                        AND m.gm_start BETWEEN FROM_UNIXTIME(1714521600) AND FROM_UNIXTIME(1718849956)
+                        AND (m.gm_tscore0 >= 10 or m.gm_tscore1 >= 10)
+                        AND m.gm_start >= DATE_SUB(NOW(), INTERVAL 60 DAY)
                     )
 
                     SELECT
-                    player_match_history.plr_name as name,
+                    ut_players.name,
                     ut_players.DISCORD_ID,
                     player_match_history.plr_key as player_guid,
                     SUM(Score) / SUM(Rounds) as PPR,
