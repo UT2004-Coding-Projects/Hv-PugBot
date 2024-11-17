@@ -27,19 +27,21 @@ def format_unpicked(unpicked: OrderedDict):
         ]
     )
 
-
 ### Utility Functions
 
 
 def get_player_string(player: Tuple[discord.Member, List[str]], mention) -> str:
     mention_or_name = f"<@{player[0].id}>" if mention else get_player_name(player[0])
     tags = get_tags(player[1])
-    ppr = player_stats.get_player(player[0].id)
+    p_stat = player_stats.get_player(player[0].id)
+
     p_string = f"{mention_or_name}"
     if tags is not None:
         p_string = p_string + f" {tags}"
-    if ppr is not None:
-        p_string = p_string + f" ({ppr})"
+    if p_stat is not None:
+        p_string = p_string + f" ({p_stat.stat_value:.2f})"
+    else:
+        p_string = p_string + f" (N/A)"
     return p_string
 
 
