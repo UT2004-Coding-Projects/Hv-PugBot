@@ -122,6 +122,9 @@ class KokueiUFCStatsRetriever(AbstractPlayerStatsRetriever):
                     FROM player_match_history
                     JOIN ufc.ut_players
                         on player_match_history.plr_key = ut_players.UT_2K4_ID
+                    WHERE
+                        Rounds > 0
+                        AND Score > 0
                     GROUP by 1, 2
                     HAVING
                     MatchCount > '0';
