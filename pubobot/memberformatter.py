@@ -1,7 +1,6 @@
 from typing import List, Tuple
 from collections import OrderedDict
 import discord
-from .performance_stats import stat_provider
 
 
 ## No tags
@@ -29,6 +28,8 @@ def format_unpicked(unpicked: OrderedDict):
 
 
 def get_player_string(player: Tuple[discord.Member, List[str]], mention) -> str:
+    from .performance_stats import stat_provider
+
     mention_or_name = f"<@{player[0].id}>" if mention else get_player_name(player[0])
     tags = get_tags(player[1])
     p_stat = stat_provider.get_player(player[0].id)
