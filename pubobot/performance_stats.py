@@ -5,9 +5,6 @@ import abc
 from . import config
 
 
-stat_provider = None
-
-
 @dataclass
 class Player:
     name: str
@@ -33,6 +30,9 @@ class NullStatProvider(AbstractPlayerStatProvider):
     """Implementation that does nothing - used when stats are disabled"""
     def get_player(self, discord_id: str) -> Optional[Player]:
         return None
+
+
+stat_provider = NullStatProvider()
 
 
 def init():
