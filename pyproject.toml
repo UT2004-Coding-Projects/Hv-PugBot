@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "pubobot"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+license = "GPL3"
+readme = "README.md"
+
+[tool.poetry.scripts]
+pubobot = "pubobot.__main__:main"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+discord-py = "^1.7.3"
+pyreadline3 = {version = "^3.4.1", platform = "win32"}
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.2.2"
+pytest = "^8.0.1"
+pytest-asyncio = "^0.23.5"
+dpytest = "0.5.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+mkdocs = "*"
+mkdocs-material = "*"

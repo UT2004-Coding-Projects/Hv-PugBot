@@ -1,12 +1,35 @@
-**/.DS_Store
-.venv
-.venv3
+# MkDocs build directory
+/site/
+
+# Python virtual environment
+/.venv/
+/.venv3/
+
+# Compiled Python files
 *.pyc
 *.pyo
+
+# Temporary files
 *.swp
-.eggs
-*.egg-info
-/build
-/dist
-/.idea
+.eggs/
+*.egg-info/
+
+# Build directories
+/build/
+/dist/
+
+# IDE files
+/.idea/
+/.vscode/
+
+# macOS specific files
+**/.DS_Store
+
+# Python Black diff file
 /.black.diff
+/.python-version
+
+# Application specific files
+database.sqlite3
+/logs/
+/config.cfg
