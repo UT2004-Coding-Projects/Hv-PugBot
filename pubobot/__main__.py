@@ -30,8 +30,8 @@ def main():
     scheduler.init()
     bot.init()
     pickup_stats.init(args.db)
-    performance_stats.init()
     config.init(args.config)
+    performance_stats.init()
     client.init()
 
     loop = client.c.loop
