@@ -8,6 +8,14 @@ import os
 from contextlib import contextmanager
 
 
+import time
+
+from . import config
+
+
+tasks = {}
+next_task = False
+
 
 @dataclass
 class Player:
@@ -34,3 +42,12 @@ class NullStatProvider(AbstractPlayerStatProvider):
     """Implementation that does nothing - used when stats are disabled"""
     def get_player(self, discord_id: str) -> Optional[Player]:
         return None
+
+
+def init():
+    global stat_provider
+    stat_provider = NullStatProvider()
+
+    if config.cfg.PERFORMANCE_STAT_PROVIDER == "UT2K4StatsDBStatProvider":
+        from .providers.ut2k4_statsdb_provider import UT2K4StatsDBStatProvider
+        stat_provider = UT2K4StatsDBStatProvider()

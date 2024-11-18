@@ -1,7 +1,7 @@
 from typing import List, Tuple
 from collections import OrderedDict
 import discord
-from .bot import stat_provider
+from .performance_stats import stat_provider
 
 
 ## No tags

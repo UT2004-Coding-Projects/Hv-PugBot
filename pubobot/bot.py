@@ -49,7 +49,6 @@ active_pickups = []
 active_matches = []
 allowoffline = []  # users with !allowoffline
 waiting_reactions = {}  # {message_id: function}
-stat_provider = None
 
 
 def init():
@@ -59,20 +58,13 @@ def init():
         active_pickups, \
         active_matches, \
         allowoffline, \
-        waiting_reactions, \
-        stat_provider
+        waiting_reactions
     channels = []
     channels_list = []
     active_pickups = []
     active_matches = []
     allowoffline = []
     waiting_reactions = {}
-    
-    if config.cfg.PERFORMANCE_STAT_PROVIDER == "NullProvider":
-        stat_provider = performance_stats.NullStatProvider()
-    if config.cfg.PERFORMANCE_STAT_PROVIDER == "UT2K4StatsDBStatProvider":
-        from .providers.ut2k4_statsdb_provider import UT2K4StatsDBStatProvider
-        stat_provider = UT2K4StatsDBStatProvider()
 
 
 class UnpickedPool:
