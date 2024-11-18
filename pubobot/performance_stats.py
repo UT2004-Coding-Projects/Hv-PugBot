@@ -1,20 +1,11 @@
 from dataclasses import dataclass
 from typing import Optional
 import abc
-from functools import lru_cache
-import time
-import MySQLdb
-import os
-from contextlib import contextmanager
-
-
-import time
 
 from . import config
 
 
-tasks = {}
-next_task = False
+stat_provider = None
 
 
 @dataclass
