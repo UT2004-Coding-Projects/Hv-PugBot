@@ -10,7 +10,7 @@ import time
 
 import readline
 
-from . import bot, client, config, stats3
+from . import bot, client, config, pickup_stats
 
 
 class ConsoleCompleter(object):  # Custom completer
@@ -148,7 +148,7 @@ def run():
                 display("All pickups: {0}".format(" | ".join(channels)))
             elif l[0] == "stats":
                 for c in bot.channels:
-                    display("STATS| {0}: {1}".format(c.name, stats3.stats(c.id)))
+                    display("STATS| {0}: {1}".format(c.name, pickup_stats.stats(c.id)))
             elif l[0] == "channels":
                 display(
                     "CONSOLE| Pickup channels: {0}".format(
@@ -226,7 +226,7 @@ def delete_unused_channels(echo, tl=30):
 
 def terminate():
     global alive
-    stats3.close()
+    pickup_stats.close()
     print("Waiting for connection to close...")
     alive = False
 

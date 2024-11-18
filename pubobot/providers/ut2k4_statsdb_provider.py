@@ -1,51 +1,14 @@
-from dataclasses import dataclass
-from typing import Optional
-import abc
-from functools import lru_cache
+from contextlib import contextmanager
 import time
 import MySQLdb
 import os
-from contextlib import contextmanager
-
-
-@dataclass
-class Player:
-    name: str
-    discord_id: Optional[str] = None
-    ut_2k4_id: Optional[str] = None
-
-
-@dataclass
-class PlayerStat:
-    player: Player
-    stat_type: str
-    stat_value: float
+from functools import lru_cache
+from pubobot.performance_stats import AbstractPlayerStatProvider, Player, PlayerStat
 
 
 def get_ttl_hash(seconds=600):
     """Return the same value withing `seconds` time period"""
     return round(time.time() / seconds)
-
-
-class AbstractPlayerStatsRetriever(abc.ABC):
-    @abc.abstractmethod
-    def get_player(self, discord_id: str) -> Optional[Player]:
-        """Get player stats by discord ID"""
-        pass
-    
-    @abc.abstractmethod
-    def add_player(self, player: Player) -> None:
-        """Add a new player"""
-        pass
-
-
-class NullStatsRetriever(AbstractPlayerStatsRetriever):
-    """Implementation that does nothing - used when stats are disabled"""
-    def get_player(self, discord_id: str) -> Optional[Player]:
-        return None
-        
-    def add_player(self, player: Player) -> None:
-        pass
 
 
 @contextmanager
@@ -61,7 +24,7 @@ def StatsDBConnection():
     connection.commit()
 
 
-class KokueiUFCStatsRetriever(AbstractPlayerStatsRetriever):
+class UT2K4StatsDBStatProvider(AbstractPlayerStatProvider):
 
     def __init__(self):
         self._player_stats = {}
@@ -77,18 +40,18 @@ class KokueiUFCStatsRetriever(AbstractPlayerStatsRetriever):
             )
 
     @property
-    def player_stats(self):
+    def player_stats(self) -> dict:
         stats = self._load_player_stats(ttl_hash=get_ttl_hash())
         for p_stat in stats:
             self._player_stats[p_stat.player.discord_id] = p_stat
 
         return self._player_stats
 
-    def get_player(self, discord_id: str):
+    def get_player(self, discord_id: str) -> Player:
         return self.player_stats.get(str(discord_id))
 
     @lru_cache()
-    def _load_player_stats(self, ttl_hash=None):
+    def _load_player_stats(self, ttl_hash: int = None) -> dict:
         try:
             with StatsDBConnection() as cursor:
                 cursor.execute(
@@ -137,7 +100,7 @@ class KokueiUFCStatsRetriever(AbstractPlayerStatsRetriever):
                     plr = Player(
                         name=result[0],
                         discord_id=result[1],
-                        ut_2k4_id=result[2],
+                        gamer_id=result[2],
                     )
 
                     player_stats.append(PlayerStat(player=plr, stat_type='ppr', stat_value=float(result[3])))

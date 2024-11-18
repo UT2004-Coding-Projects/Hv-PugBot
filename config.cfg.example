@@ -5,4 +5,5 @@ BACKUP_TIME = 6
 KEEP_BACKUPS = 5
 COMMANDS_LINK = "https://dcramps.github.io/Pubobot/commands"
 HELPINFO = "A helpful message"
-FIRST_INIT_MESSAGE="Pickups enabled"
+FIRST_INIT_MESSAGE = "Pickups enabled"
+PERFORMANCE_STAT_PROVIDER = "NullStatProvider"

@@ -8,7 +8,7 @@ import signal
 import sys
 
 # my modules
-from . import console, config, bot, client, scheduler, stats3
+from . import console, config, bot, client, scheduler, pickup_stats
 
 
 def main():
@@ -29,7 +29,7 @@ def main():
     console.init(args.logs, enable_input)
     scheduler.init()
     bot.init()
-    stats3.init(args.db)
+    pickup_stats.init(args.db)
     config.init(args.config)
     client.init()
 
