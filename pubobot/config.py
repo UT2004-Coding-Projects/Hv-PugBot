@@ -14,10 +14,12 @@ class Config:
     COMMANDS_LINK = "https://link-to-commands"
     HELPINFO = "A helpful message"
     FIRST_INIT_MESSAGE = "Pickups enabled"
+    PERFORMANCE_STAT_PROVIDER = "NullProvider"
 
 
 cfg = Config()
 data = {}
+
 
 
 def init(config_file="config.cfg"):
@@ -48,6 +50,7 @@ def init(config_file="config.cfg"):
         ("PUBOBOT_COMMANDS_LINK", str, "COMMANDS_LINK"),
         ("PUBOBOT_HELPINFO", str, "HELPINFO"),
         ("PUBOBOT_FIRST_INIT_MESSAGE", str, "FIRST_INIT_MESSAGE"),
+        ("PUBOBOT_PERFORMANCE_STAT_PROVIDER", str, "PERFORMANCE_STAT_PROVIDER")
     ]
 
     for var, attr_type, attr in env_vars:

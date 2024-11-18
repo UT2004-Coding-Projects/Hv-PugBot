@@ -11,7 +11,8 @@ from typing import List
 
 from discord import errors, Member
 
-from . import client, config, console, memberformatter, stats3, scheduler, utils
+from . import client, config, console, memberformatter, pickup_stats, scheduler, utils, performance_stats
+
 
 max_expire_time = 6 * 60 * 60  # 6 hours
 max_bantime = 30 * 24 * 60 * 60 * 12 * 3  # 30 days * 12 * 3
@@ -149,8 +150,8 @@ class Match:
     def __init__(self, pickup, players: List[Member]):
         global matches_step
         # set match id
-        stats3.last_match += 1
-        self.id = stats3.last_match
+        pickup_stats.last_match += 1
+        self.id = pickup_stats.last_match
         self.ready_message = None
         # these values cannot be changed until match end, so we need to save them
         self.maxplayers = pickup.cfg["maxplayers"]
@@ -163,7 +164,7 @@ class Match:
         )
         self.ranked_streaks = pickup.channel.cfg["ranked_streaks"]
         if self.ranked:
-            self.ranks = stats3.get_ranks(pickup.channel, [i.id for i in players])
+            self.ranks = pickup_stats.get_ranks(pickup.channel, [i.id for i in players])
             self.players = list(
                 sorted(players, key=lambda p: self.ranks[p.id], reverse=True)
             )
@@ -518,8 +519,8 @@ class Match:
             self.finish_match()
 
     def finish_match(self):
-        new_ranks = stats3.register_pickup(self)
-        self.pickup.channel.lastgame_cache = stats3.lastgame(self.pickup.channel.id)
+        new_ranks = pickup_stats.register_pickup(self)
+        self.pickup.channel.lastgame_cache = pickup_stats.lastgame(self.pickup.channel.id)
         self.pickup.unmark_user_ready(*self.players)
         active_matches.remove(self)
         if self.state == "waiting_report":
@@ -728,14 +729,14 @@ class Channel:
         self.oldtime = 0
         self.pickups = []
         self.init_pickups()
-        self.pickup_groups = stats3.get_pickup_groups(self.id)
-        self.lastgame_cache = stats3.lastgame(self.id)
+        self.pickup_groups = pickup_stats.get_pickup_groups(self.id)
+        self.lastgame_cache = pickup_stats.lastgame(self.id)
         self.lastgame_pickup = None
         self.oldtopic = "[**no pickups**]"
         self.to_remove = []  # players
 
     def init_pickups(self):
-        pickups = stats3.get_pickups(self.id)
+        pickups = pickup_stats.get_pickups(self.id)
         for i in pickups:
             try:
                 self.pickups.append(Pickup(self, i))
@@ -1039,7 +1040,7 @@ class Channel:
             return
 
         # check noadds and phrases
-        l = stats3.check_memberid(
+        l = pickup_stats.check_memberid(
             self.id, member.id
         )  # is_banned, phrase, default_expire
         if l[0] == True:  # if banned
@@ -1272,7 +1273,7 @@ class Channel:
             l = self.lastgame_cache
         # `.last[tttt] [gametype]` -- use db
         else:
-            l = stats3.lastgame(
+            l = pickup_stats.lastgame(
                 self.id, args[0] if args else None, index
             )  # id, ago, gametype, players, alpha_players, beta_players
 
@@ -1548,7 +1549,7 @@ class Channel:
             client.reply(self.channel, member, "Not enough arguments.")
 
     async def subfor(self, member, args):
-        l = stats3.check_memberid(self.id, member.id)
+        l = pickup_stats.check_memberid(self.id, member.id)
         if l[0] == True:  # if banned
             client.reply(self.channel, member, l[1])
             return
@@ -1604,7 +1605,7 @@ class Channel:
 
             if can_sub:
                 if match.ranked:
-                    match.ranks = stats3.get_ranks(self, [i.id for i in match.players])
+                    match.ranks = pickup_stats.get_ranks(self, [i.id for i in match.players])
                     match.players = list(
                         sorted(
                             match.players, key=lambda p: match.ranks[p.id], reverse=True
@@ -1953,7 +1954,7 @@ class Channel:
             page = 0
 
         print(page)
-        data = stats3.get_ladder(self.id, page)  # [rank, nick, wins, loses]
+        data = pickup_stats.get_ladder(self.id, page)  # [rank, nick, wins, loses]
         if len(data):
             l = [
                 "{0:^3}|{1:^11}|{2:^25.25}|{3:^9}| {4}".format(
@@ -1980,9 +1981,9 @@ class Channel:
 
     def get_rank_details(self, member, args):
         if len(args):
-            details, matches = stats3.get_rank_details(self.id, nick=" ".join(args))
+            details, matches = pickup_stats.get_rank_details(self.id, nick=" ".join(args))
         else:
-            details, matches = stats3.get_rank_details(self.id, user_id=member.id)
+            details, matches = pickup_stats.get_rank_details(self.id, user_id=member.id)
 
         if details:
             details_str = (
@@ -2031,7 +2032,7 @@ class Channel:
             client.reply(self.channel, member, "You must specify a match id.")
             return
 
-        reply = stats3.undo_ranks(self.id, int(args[0]))
+        reply = pickup_stats.undo_ranks(self.id, int(args[0]))
         client.notice(self.channel, reply)
 
     def reset_ranks(self, member, access_level):
@@ -2043,7 +2044,7 @@ class Channel:
             )
             return
         else:
-            stats3.reset_ranks(self.id)
+            pickup_stats.reset_ranks(self.id)
             client.reply(self.channel, member, "All rating data has been flushed.")
 
     async def seed_player(self, member, args, access_level):
@@ -2069,7 +2070,7 @@ class Channel:
             client.reply(self.channel, member, "Invalid member highlight specified.")
             return
 
-        stats3.seed_player(self.channel.id, target.id, int(args[1]))
+        pickup_stats.seed_player(self.channel.id, target.id, int(args[1]))
         client.reply(self.channel, member, "done.")
 
     def set_ready(self, member, isready):
@@ -2364,7 +2365,7 @@ class Channel:
     def default_expire(self, member, timelist):
         # print user default expire time
         if timelist == []:
-            timeint = stats3.get_expire(member.id)
+            timeint = pickup_stats.get_expire(member.id)
             timeint = timeint if timeint != None else self.cfg["global_expire"]
             if timeint:
                 client.reply(
@@ -2383,13 +2384,13 @@ class Channel:
 
         # set expire time to afk
         elif timelist[0] == "afk":
-            stats3.set_expire(member.id, 0)
+            pickup_stats.set_expire(member.id, 0)
             client.reply(
                 self.channel, member, "You will be removed on AFK status by default."
             )
 
         elif timelist[0] == "none":
-            stats3.set_expire(member.id, None)
+            pickup_stats.set_expire(member.id, None)
             client.reply(
                 self.channel,
                 member,
@@ -2404,7 +2405,7 @@ class Channel:
                 client.reply(self.channel, member, str(e))
                 return
             if timeint > 0 and timeint <= max_expire_time:
-                stats3.set_expire(member.id, timeint)
+                pickup_stats.set_expire(member.id, timeint)
                 client.reply(
                     self.channel,
                     member,
@@ -2435,9 +2436,9 @@ class Channel:
 
     def getstats(self, member, target):
         if target == []:
-            s = stats3.stats(self.id)
+            s = pickup_stats.stats(self.id)
         else:
-            s = stats3.stats(self.id, target[0])
+            s = pickup_stats.stats(self.id, target[0])
         client.notice(self.channel, s)
 
     def gettop(self, member, arg):
@@ -2466,7 +2467,7 @@ class Channel:
             client.reply(self.channel, member, "Bad argument.")
             return
 
-        top10 = stats3.top(self.id, timegap, pickup)
+        top10 = pickup_stats.top(self.id, timegap, pickup)
         if top10:
             if pickup:
                 client.reply(
@@ -2481,7 +2482,7 @@ class Channel:
 
     def getnoadds(self, member, args):
         if args == []:
-            l = stats3.noadds(self.id)
+            l = pickup_stats.noadds(self.id)
         else:
             try:
                 index = int(args[0])
@@ -2492,7 +2493,7 @@ class Channel:
                     self.channel, member, "Index argument must be a positive number."
                 )
                 return
-            l = stats3.noadds(self.id, index)
+            l = pickup_stats.noadds(self.id, index)
         if l != []:
             client.notice(self.channel, "\r\n".join(l))
         else:
@@ -2547,7 +2548,7 @@ class Channel:
                     return
             if newpickups != []:
                 for i in newpickups:
-                    cfg = stats3.new_pickup(self.id, i[0], i[1])
+                    cfg = pickup_stats.new_pickup(self.id, i[0], i[1])
                     self.pickups.append(Pickup(self, cfg))
                 self.replypickups(member)
         else:
@@ -2561,7 +2562,7 @@ class Channel:
             if len(toremove) > 0:
                 for i in toremove:
                     self.pickups.remove(i)
-                    stats3.delete_pickup(self.id, i.name)
+                    pickup_stats.delete_pickup(self.id, i.name)
                 self.replypickups(member)
             else:
                 client.reply(self.channel, member, "No such pickups found.")
@@ -2588,9 +2589,9 @@ class Channel:
                     )
                     return
                 if group_name in self.pickup_groups.keys():
-                    stats3.delete_pickup_group(self.id, group_name)
+                    pickup_stats.delete_pickup_group(self.id, group_name)
                 self.pickup_groups[group_name] = desired_pickup_names
-                stats3.new_pickup_group(self.id, group_name, desired_pickup_names)
+                pickup_stats.new_pickup_group(self.id, group_name, desired_pickup_names)
                 self.show_pickup_groups()
             else:
                 client.reply(
@@ -2603,7 +2604,7 @@ class Channel:
         if access_level > 1:
             if len(args) > 0:
                 if args[0] in self.pickup_groups:
-                    stats3.delete_pickup_group(self.id, args[0])
+                    pickup_stats.delete_pickup_group(self.id, args[0])
                     self.pickup_groups.pop(args[0])
                     client.reply(
                         self.channel,
@@ -2726,7 +2727,7 @@ class Channel:
                         client.reply(self.channel, member, "Phrase has been removed.")
                     else:
                         client.reply(self.channel, member, "Phrase has been set.")
-                    stats3.set_phrase(self.id, target.id, phrase)
+                    pickup_stats.set_phrase(self.id, target.id, phrase)
                 else:
                     client.reply(
                         self.channel, member, "Target must be a Member highlight."
@@ -2775,7 +2776,7 @@ class Channel:
 
             if target:
                 self.remove_player(target, [], "banned")
-                s = stats3.noadd(
+                s = pickup_stats.noadd(
                     self.id, target.id, target.name, duratation, member.name, reason
                 )
                 client.notice(self.channel, s)
@@ -2794,7 +2795,7 @@ class Channel:
             if highlight:
                 target = await self.guild.fetch_member(int(highlight.group(1)))
                 if target:
-                    s = stats3.forgive(self.id, target.id, target.name, member.name)
+                    s = pickup_stats.forgive(self.id, target.id, target.name, member.name)
                     client.reply(self.channel, member, s)
                 else:
                     client.reply(
@@ -2904,7 +2905,7 @@ class Channel:
 
     def reset_stats(self, member, access_level):
         if access_level > 1:
-            stats3.reset_stats(self.id)
+            pickup_stats.reset_stats(self.id)
             client.reply(self.channel, member, "Done.")
         else:
             client.reply(self.channel, member, "You have no right for this!")
@@ -2928,11 +2929,11 @@ class Channel:
 
     def update_channel_config(self, variable, value):
         self.cfg[variable] = value
-        stats3.update_channel_config(self.id, variable, value)
+        pickup_stats.update_channel_config(self.id, variable, value)
 
     def update_pickup_config(self, pickup, variable, value):
         pickup.cfg[variable] = value
-        stats3.update_pickup_config(self.id, pickup.name, variable, value)
+        pickup_stats.update_pickup_config(self.id, pickup.name, variable, value)
 
     def show_config(self, member, args):
         if len(args):
@@ -4238,7 +4239,7 @@ def delete_channel(channel):
             active_matches.remove(match)
 
     channels.remove(channel)
-    stats3.delete_channel(channel.id)
+    pickup_stats.delete_channel(channel.id)
 
 
 def member_left(member):  # when a user left a guild

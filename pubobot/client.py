@@ -3,7 +3,7 @@
 import discord
 import traceback
 import time
-from . import console, config, bot, stats3
+from . import console, config, bot, pickup_stats
 
 
 ready = False
@@ -21,7 +21,7 @@ def process_connection():
 
     console.display("SYSTEM| Logged in as: {0}, ID: {1}".format(c.user.name, c.user.id))
 
-    channels = stats3.get_channels()
+    channels = pickup_stats.get_channels()
     for cfg in channels:
         discord_channel = c.get_channel(cfg["channel_id"])
         if discord_channel == None:
@@ -202,7 +202,7 @@ def create_client(loop=None):
         elif message.content == "!enable_pickups":
             if message.channel.permissions_for(message.author).manage_channels:
                 if message.channel.id not in [x.id for x in bot.channels]:
-                    newcfg = stats3.new_channel(
+                    newcfg = pickup_stats.new_channel(
                         message.guild.id,
                         message.guild.name,
                         message.channel.id,
