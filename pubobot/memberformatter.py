@@ -38,8 +38,6 @@ def get_player_string(player: Tuple[discord.Member, List[str]], mention) -> str:
         p_string = p_string + f" {tags}"
     if p_stat is not None:
         p_string = p_string + f" ({p_stat.stat_value:.2f})"
-    else:
-        p_string = p_string + f" (N/A)"
     return p_string
 
 
