@@ -3,6 +3,7 @@ import time
 import MySQLdb
 import os
 from pubobot.performance_stats import AbstractPlayerStatProvider, Player, PlayerStat
+from threading import Thread
 
 
 @contextmanager
@@ -24,6 +25,7 @@ class UT2K4StatsDBStatProvider(AbstractPlayerStatProvider):
         self._player_stats = {}
         self.ttl = 600
         self._last_refresh = 0
+        self._is_currently_refreshing = False
 
     def add_player(self, player: Player):
         with StatsDBConnection() as cursor:
@@ -41,16 +43,25 @@ class UT2K4StatsDBStatProvider(AbstractPlayerStatProvider):
 
         if self._player_stats:
             if current_time - self._last_refresh > self.ttl:
-                self._refresh_stats()
+                self._trigger_background_refresh()
             return self._player_stats
 
         return self._refresh_stats()
 
+    def _trigger_background_refresh(self):
+        self.is_refreshing = True
+        thread = Thread(target=self._refresh_stats)
+        thread.daemon = True
+        thread.start()
+
     def _refresh_stats(self) -> dict:
-        stats = self._load_player_stats()
-        self._player_stats = {p_stat.player.discord_id: p_stat for p_stat in stats}
-        self._last_refresh = time.time()
-        return self._player_stats
+        try:
+            stats = self._load_player_stats()
+            self._player_stats = {p_stat.player.discord_id: p_stat for p_stat in stats}
+            self._last_refresh = time.time()
+            return self._player_stats
+        finally:
+            self._is_refreshing = False
 
     def get_player(self, discord_id: str) -> Player:
         return self.player_stats.get(str(discord_id))
