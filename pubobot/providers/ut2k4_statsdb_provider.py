@@ -2,13 +2,7 @@ from contextlib import contextmanager
 import time
 import MySQLdb
 import os
-from functools import lru_cache
 from pubobot.performance_stats import AbstractPlayerStatProvider, Player, PlayerStat
-
-
-def get_ttl_hash(seconds=600):
-    """Return the same value withing `seconds` time period"""
-    return round(time.time() / seconds)
 
 
 @contextmanager
@@ -26,8 +20,10 @@ def StatsDBConnection():
 
 class UT2K4StatsDBStatProvider(AbstractPlayerStatProvider):
 
-    def __init__(self):
+    def __init__(self, ttl=600):
         self._player_stats = {}
+        self.ttl = 600
+        self._last_refresh = 0
 
     def add_player(self, player: Player):
         with StatsDBConnection() as cursor:
@@ -41,17 +37,25 @@ class UT2K4StatsDBStatProvider(AbstractPlayerStatProvider):
 
     @property
     def player_stats(self) -> dict:
-        stats = self._load_player_stats(ttl_hash=get_ttl_hash())
-        for p_stat in stats:
-            self._player_stats[p_stat.player.discord_id] = p_stat
+        current_time = time.time()
 
+        if self._player_stats:
+            if current_time - self._last_refresh > self.ttl:
+                self._refresh_stats()
+            return self._player_stats
+
+        return self._refresh_stats()
+
+    def _refresh_stats(self) -> dict:
+        stats = self._load_player_stats()
+        self._player_stats = {p_stat.player.discord_id: p_stat for p_stat in stats}
+        self._last_refresh = time.time()
         return self._player_stats
 
     def get_player(self, discord_id: str) -> Player:
         return self.player_stats.get(str(discord_id))
 
-    @lru_cache()
-    def _load_player_stats(self, ttl_hash: int = None) -> dict:
+    def _load_player_stats(self) -> dict:
         try:
             with StatsDBConnection() as cursor:
                 cursor.execute(
